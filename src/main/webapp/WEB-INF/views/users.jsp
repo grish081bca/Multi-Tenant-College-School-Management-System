@@ -107,8 +107,8 @@
                     <td><c:out value="${empty user.tenantName ? '-' : user.tenantName}"/></td>
                     <td><c:out value="${user.userType}"/></td>
                     <td><c:out value="${empty user.userTemplateName ? '-' : user.userTemplateName}"/></td>
-                    <td><c:out value="${user.enabled ? 'Yes' : 'No'}"/></td>
-                    <td><c:out value="${user.status}"/></td>
+                    <td><span class="status-pill status-${user.enabled ? 'ACTIVE' : 'INACTIVE'}"><c:out value="${user.enabled ? 'Enabled' : 'Disabled'}"/></span></td>
+                    <td><span class="status-pill status-${user.status}"><c:out value="${user.status}"/></span></td>
                     <td class="actions-cell">
                         <a class="action-button secondary" href="<c:url value='/web/users/${user.id}/edit'/>" title="Edit user" aria-label="Edit user">
                             <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
