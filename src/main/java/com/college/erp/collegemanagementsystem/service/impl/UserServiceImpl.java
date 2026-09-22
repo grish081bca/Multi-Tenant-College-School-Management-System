@@ -5,12 +5,14 @@ import com.college.erp.collegemanagementsystem.dto.UserDTO;
 import com.college.erp.collegemanagementsystem.entity.Tenant;
 import com.college.erp.collegemanagementsystem.entity.User;
 import com.college.erp.collegemanagementsystem.entity.UserTemplate;
+import com.college.erp.collegemanagementsystem.enums.EntityChangeAction;
 import com.college.erp.collegemanagementsystem.enums.UserStatus;
 import com.college.erp.collegemanagementsystem.enums.UserType;
 import com.college.erp.collegemanagementsystem.exception.ResourceNotFoundException;
 import com.college.erp.collegemanagementsystem.repository.TenantRepository;
 import com.college.erp.collegemanagementsystem.repository.UserRepository;
 import com.college.erp.collegemanagementsystem.repository.UserTemplateRepository;
+import com.college.erp.collegemanagementsystem.service.EntityChangeLogService;
 import com.college.erp.collegemanagementsystem.service.UserService;
 import com.college.erp.collegemanagementsystem.util.ConvertUtils;
 import org.springframework.data.domain.Page;
@@ -35,20 +37,27 @@ import java.util.Optional;
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
+    private static final String USER_ENTITY = "User";
+    private static final String CREATE_REMARKS = "User created.";
+    private static final String UPDATE_REMARKS = "User updated.";
+    private static final String STATUS_REMARKS = "User status changed.";
 
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
     private final UserTemplateRepository userTemplateRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EntityChangeLogService entityChangeLogService;
 
     public UserServiceImpl(UserRepository userRepository,
                            TenantRepository tenantRepository,
                            UserTemplateRepository userTemplateRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           EntityChangeLogService entityChangeLogService) {
         this.userRepository = userRepository;
         this.tenantRepository = tenantRepository;
         this.userTemplateRepository = userTemplateRepository;
         this.passwordEncoder = passwordEncoder;
+        this.entityChangeLogService = entityChangeLogService;
     }
     @Override
     @Transactional(readOnly = true)
@@ -186,14 +195,16 @@ public class UserServiceImpl implements UserService {
             user.setPassword(passwordEncoder.encode(userDto.getPassword()));
         }
         User saved = userRepository.save(user);
+        logCreatedUser(saved);
         return ConvertUtils.toUserDTO(saved);
     }
     @Override
-    public UserDTO update(Long id, UserDTO userDto, Long tenantId, Long userTemplateId) {
+    public UserDTO update(Long id, UserDTO userDto, Long tenantId, Long userTemplateId, String remarks) {
         if (id == null) {
             throw new IllegalArgumentException("User id is required");
         }
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        UserDTO before = ConvertUtils.toUserDTO(user);
         user.setUsername(userDto.getUsername());
         user.setEmail(userDto.getEmail());
         user.setFirstName(userDto.getFirstName());
@@ -223,6 +234,7 @@ public class UserServiceImpl implements UserService {
             user.setUserTemplate(null);
         }
         User saved = userRepository.save(user);
+        logUpdatedUser(before, ConvertUtils.toUserDTO(saved), effectiveRemarks(remarks, UPDATE_REMARKS));
         return ConvertUtils.toUserDTO(saved);
     }
     @Override
@@ -232,12 +244,53 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(id).map(ConvertUtils::toUserDTO);
     }
     @Override
-    public void changeStatus(Long id, UserStatus status) {
+    public UserDTO changeStatus(Long id, UserStatus status, String remarks) {
         if (id == null) throw new IllegalArgumentException("User id is required");
         if (status == null) throw new IllegalArgumentException("Status is required");
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        UserStatus oldStatus = user.getStatus();
         user.setStatus(status);
-        userRepository.save(user);
+        User saved = userRepository.save(user);
+        entityChangeLogService.logChange(USER_ENTITY, user.getId(), EntityChangeAction.STATUS_CHANGED, "status", oldStatus, status, effectiveRemarks(remarks, STATUS_REMARKS));
+        return ConvertUtils.toUserDTO(saved);
+    }
+
+    private void logCreatedUser(User user) {
+        UserDTO saved = ConvertUtils.toUserDTO(user);
+        logField(saved.getId(), EntityChangeAction.CREATED, "username", null, saved.getUsername(), CREATE_REMARKS);
+        logField(saved.getId(), EntityChangeAction.CREATED, "email", null, saved.getEmail(), CREATE_REMARKS);
+        logField(saved.getId(), EntityChangeAction.CREATED, "phoneNumber", null, saved.getPhoneNumber(), CREATE_REMARKS);
+        logField(saved.getId(), EntityChangeAction.CREATED, "firstName", null, saved.getFirstName(), CREATE_REMARKS);
+        logField(saved.getId(), EntityChangeAction.CREATED, "middleName", null, saved.getMiddleName(), CREATE_REMARKS);
+        logField(saved.getId(), EntityChangeAction.CREATED, "lastName", null, saved.getLastName(), CREATE_REMARKS);
+        logField(saved.getId(), EntityChangeAction.CREATED, "tenant", null, saved.getTenantName(), CREATE_REMARKS);
+        logField(saved.getId(), EntityChangeAction.CREATED, "userTemplate", null, saved.getUserTemplateName(), CREATE_REMARKS);
+        logField(saved.getId(), EntityChangeAction.CREATED, "userType", null, saved.getUserType(), CREATE_REMARKS);
+        logField(saved.getId(), EntityChangeAction.CREATED, "enabled", null, saved.isEnabled() ? "Enabled" : "Disabled", CREATE_REMARKS);
+        logField(saved.getId(), EntityChangeAction.CREATED, "status", null, saved.getStatus(), CREATE_REMARKS);
+    }
+
+    private void logUpdatedUser(UserDTO before, UserDTO after, String remarks) {
+        logField(after.getId(), EntityChangeAction.UPDATED, "username", before.getUsername(), after.getUsername(), remarks);
+        logField(after.getId(), EntityChangeAction.UPDATED, "email", before.getEmail(), after.getEmail(), remarks);
+        logField(after.getId(), EntityChangeAction.UPDATED, "phoneNumber", before.getPhoneNumber(), after.getPhoneNumber(), remarks);
+        logField(after.getId(), EntityChangeAction.UPDATED, "firstName", before.getFirstName(), after.getFirstName(), remarks);
+        logField(after.getId(), EntityChangeAction.UPDATED, "middleName", before.getMiddleName(), after.getMiddleName(), remarks);
+        logField(after.getId(), EntityChangeAction.UPDATED, "lastName", before.getLastName(), after.getLastName(), remarks);
+        logField(after.getId(), EntityChangeAction.UPDATED, "tenant", before.getTenantName(), after.getTenantName(), remarks);
+        logField(after.getId(), EntityChangeAction.UPDATED, "userTemplate", before.getUserTemplateName(), after.getUserTemplateName(), remarks);
+        logField(after.getId(), EntityChangeAction.UPDATED, "userType", before.getUserType(), after.getUserType(), remarks);
+        logField(after.getId(), EntityChangeAction.UPDATED, "enabled", before.isEnabled() ? "Enabled" : "Disabled", after.isEnabled() ? "Enabled" : "Disabled", remarks);
+        logField(after.getId(), EntityChangeAction.UPDATED, "status", before.getStatus(), after.getStatus(), remarks);
+    }
+
+    private void logField(Long userId, EntityChangeAction action, String fieldName, Object oldValue, Object newValue, String remarks) {
+        entityChangeLogService.logChange(USER_ENTITY, userId, action, fieldName, oldValue, newValue, remarks);
+    }
+
+    private String effectiveRemarks(String remarks, String fallback) {
+        String normalized = ConvertUtils.normalizeText(remarks);
+        return normalized == null ? fallback : normalized;
     }
 
     private OffsetDateTime toOffsetDateTime(LocalDate date) {

@@ -68,6 +68,9 @@
                 <option value="false" ${!user.enabled ? 'selected' : ''}>Disabled</option>
             </select>
         </label>
+        <c:if test="${not empty user.id}">
+            <label>Remarks (optional)<textarea name="remarks" rows="3"></textarea></label>
+        </c:if>
         <div class="form-actions">
             <button class="primary" type="submit">${not empty user.id ? 'Update user' : 'Add user'}</button>
             <a class="button secondary" href="<c:url value='/web/users'/>">Cancel</a>

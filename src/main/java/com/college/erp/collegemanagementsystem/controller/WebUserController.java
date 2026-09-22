@@ -3,6 +3,7 @@ package com.college.erp.collegemanagementsystem.controller;
 import com.college.erp.collegemanagementsystem.dto.UserDTO;
 import com.college.erp.collegemanagementsystem.enums.UserStatus;
 import com.college.erp.collegemanagementsystem.enums.UserType;
+import com.college.erp.collegemanagementsystem.service.EntityChangeLogService;
 import com.college.erp.collegemanagementsystem.service.TenantService;
 import com.college.erp.collegemanagementsystem.service.UserService;
 import com.college.erp.collegemanagementsystem.service.UserTemplateService;
@@ -21,16 +22,21 @@ import java.util.Optional;
  */
 @Controller
 public class WebUserController {
+    private static final String USER_ENTITY = "User";
+
     private final com.college.erp.collegemanagementsystem.service.UserService userService;
     private final TenantService tenantService;
     private final UserTemplateService userTemplateService;
+    private final EntityChangeLogService entityChangeLogService;
 
     public WebUserController(UserService userService,
                              TenantService tenantService,
-                             UserTemplateService userTemplateService) {
+                             UserTemplateService userTemplateService,
+                             EntityChangeLogService entityChangeLogService) {
         this.userService = userService;
         this.tenantService = tenantService;
         this.userTemplateService = userTemplateService;
+        this.entityChangeLogService = entityChangeLogService;
     }
     @GetMapping("/web/users")
     public String list(@RequestParam(required = false, name = "q") String search,
@@ -121,9 +127,10 @@ public class WebUserController {
                          @ModelAttribute UserDTO formUser,
                          @RequestParam(required = false) Long tenantId,
                          @RequestParam(required = false) Long userTemplateId,
+                         @RequestParam(required = false) String remarks,
                          RedirectAttributes attributes) {
         try {
-            userService.update(id, formUser, tenantId, userTemplateId);
+            userService.update(id, formUser, tenantId, userTemplateId, remarks);
             attributes.addFlashAttribute("success", "User updated successfully.");
         } catch (Exception e) {
             attributes.addFlashAttribute("error", e.getMessage());
@@ -138,12 +145,16 @@ public class WebUserController {
             return "redirect:/web/users";
         }
         m.addAttribute("user", u.get());
+        m.addAttribute("changeLogs", entityChangeLogService.getRecentChanges(USER_ENTITY, u.get().getId()));
         return "user-detail";
     }
     @PostMapping("/web/users/{id}/status")
-    public String status(@PathVariable Long id, @RequestParam UserStatus status, RedirectAttributes attributes) {
+    public String status(@PathVariable Long id,
+                         @RequestParam UserStatus status,
+                         @RequestParam(required = false) String remarks,
+                         RedirectAttributes attributes) {
         try {
-            userService.changeStatus(id, status);
+            userService.changeStatus(id, status, remarks);
             attributes.addFlashAttribute("success", "User status updated successfully.");
         } catch (Exception e) {
             attributes.addFlashAttribute("error", e.getMessage());

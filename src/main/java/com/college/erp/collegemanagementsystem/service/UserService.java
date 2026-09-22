@@ -34,9 +34,17 @@ public interface UserService {
 
     UserDTO create(UserDTO userDto, Long tenantId, Long userTemplateId);
 
-    UserDTO update(Long id, UserDTO userDto, Long tenantId, Long userTemplateId);
+    UserDTO update(Long id, UserDTO userDto, Long tenantId, Long userTemplateId, String remarks);
+
+    default UserDTO update(Long id, UserDTO userDto, Long tenantId, Long userTemplateId) {
+        return update(id, userDto, tenantId, userTemplateId, null);
+    }
 
     Optional<UserDTO> findById(Long id);
 
-    void changeStatus(Long id, UserStatus status);
+    UserDTO changeStatus(Long id, UserStatus status, String remarks);
+
+    default UserDTO changeStatus(Long id, UserStatus status) {
+        return changeStatus(id, status, null);
+    }
 }

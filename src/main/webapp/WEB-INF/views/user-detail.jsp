@@ -57,4 +57,47 @@
         </div>
     </article>
 </section>
+
+<section class="tenant-info-panel tenant-audit-panel">
+    <div class="tenant-section-heading">
+        <span><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i></span>
+        <div>
+            <h2>Entity Change Logs</h2>
+            <p>Recent updates recorded for this user</p>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table class="data-table tenant-log-table">
+            <thead>
+            <tr>
+                <th>When</th>
+                <th>Action</th>
+                <th>Field</th>
+                <th>Old value</th>
+                <th>New value</th>
+                <th>Remarks</th>
+                <th>By</th>
+            </tr>
+            </thead>
+            <tbody>
+            <c:forEach items="${changeLogs}" var="log">
+                <tr>
+                    <td><c:out value="${log.createdAt}"/></td>
+                    <td><span class="log-action"><c:out value="${log.action}"/></span></td>
+                    <td><c:out value="${empty log.fieldName ? '-' : log.fieldName}"/></td>
+                    <td><c:out value="${empty log.oldValue ? '-' : log.oldValue}"/></td>
+                    <td><c:out value="${empty log.newValue ? '-' : log.newValue}"/></td>
+                    <td><c:out value="${empty log.remarks ? '-' : log.remarks}"/></td>
+                    <td><c:out value="${empty log.createdBy ? 'System' : log.createdBy}"/></td>
+                </tr>
+            </c:forEach>
+            <c:if test="${empty changeLogs}">
+                <tr>
+                    <td class="empty-cell" colspan="7">No entity change logs found for this user.</td>
+                </tr>
+            </c:if>
+            </tbody>
+        </table>
+    </div>
+</section>
 <%@ include file="fragments/footer.jspf" %>

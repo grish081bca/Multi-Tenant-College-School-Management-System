@@ -150,6 +150,9 @@
                 </c:forEach>
             </select>
         </label>
+        <label>Remarks (optional)
+            <textarea name="remarks" rows="3"></textarea>
+        </label>
         <div class="form-actions dialog-actions">
             <button class="primary" type="submit">Update status</button>
             <button class="secondary dialog-close" type="button">Cancel</button>
