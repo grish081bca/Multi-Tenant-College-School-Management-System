@@ -568,6 +568,11 @@ th {
     white-space: nowrap;
 }
 
+.action-form {
+    display: inline-flex;
+    margin: 0;
+}
+
 .action-button {
     min-height: 36px;
     display: inline-flex;
@@ -584,6 +589,10 @@ th {
 
 .action-button i {
     font-size: 14px;
+}
+
+.action-button.danger {
+    border-color: #fecaca;
 }
 
 .status-dialog {

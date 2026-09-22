@@ -1,5 +1,5 @@
-<label>Search
-    <input name="q" value="<c:out value='${q}'/>" placeholder="Search records">
+<label>Master Search
+    <input name="q" value="<c:out value='${q}'/>" placeholder="Search all columns">
 </label>
 <label>Rows
     <select name="size">
