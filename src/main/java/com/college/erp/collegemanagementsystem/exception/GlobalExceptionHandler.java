@@ -15,6 +15,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -43,6 +46,22 @@ public class GlobalExceptionHandler {
                 exception.getMessage(),
                 request.getRequestURI(),
                 List.of());
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<RestResponseDTO> handleValidationException(ValidationException exception, HttpServletRequest request) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                ResponseStatus.VALIDATION_FAILED,
+                exception.getMessage(),
+                request.getRequestURI(),
+                List.of());
+    }
+
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class, MissingServletRequestParameterException.class})
+    public ResponseEntity<RestResponseDTO> handleMalformedRequest(Exception exception, HttpServletRequest request) {
+        String message = exception.getMessage() == null ? "Request contains invalid or missing values." : exception.getMessage();
+        return buildResponse(HttpStatus.BAD_REQUEST, ResponseStatus.BAD_REQUEST, message, request.getRequestURI(), List.of());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

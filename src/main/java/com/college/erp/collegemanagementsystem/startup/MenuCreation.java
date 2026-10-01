@@ -90,7 +90,19 @@ public class MenuCreation {
 
                 superMenu("CITY", "City", null, "fa-solid fa-city", 90),
                 subMenu("CITIES_LIST", "List Cities", "/web/cities", "CITY", 91),
-                subMenu("CITIES_ADD", "Add City", "/web/cities/add", "CITY", 91)
+                subMenu("CITIES_ADD", "Add City", "/web/cities/add", "CITY", 91),
+
+                superMenu("ACADEMICS", "Academics", null, "fa-solid fa-graduation-cap", 100),
+                subMenu("DEPARTMENTS_LIST", "Departments", "/web/departments", "ACADEMICS", 101),
+                subMenu("FACULTIES_LIST", "Faculties", "/web/faculties", "ACADEMICS", 102),
+                subMenu("PROGRAMS_LIST", "Programs", "/web/programs", "ACADEMICS", 103),
+                subMenu("ACADEMIC_YEARS_LIST", "Academic Years", "/web/academic-years", "ACADEMICS", 104),
+                subMenu("SEMESTERS_LIST", "Semesters", "/web/semesters", "ACADEMICS", 105),
+                subMenu("SECTIONS_LIST", "Sections", "/web/sections", "ACADEMICS", 106),
+                subMenu("SUBJECTS_LIST", "Subjects", "/web/subjects", "ACADEMICS", 107),
+                subMenu("PROGRAM_SUBJECTS_LIST", "Program Subjects", "/web/program-subjects", "ACADEMICS", 108),
+                subMenu("STUDENTS_LIST", "Students", "/web/students", "ACADEMICS", 109),
+                subMenu("STUDENT_ENROLLMENTS_LIST", "Student Enrollments", "/web/student-enrollments", "ACADEMICS", 110)
         );
 
         for (MenuSeed seed : menuSeeds) {
@@ -113,17 +125,16 @@ public class MenuCreation {
 
     private void createMenuTemplates(Map<String, Menu> menus) {
         List<String> allMenus = new ArrayList<>(menus.keySet());
-        List<String> collegeAdminMenus = List.of(
-                "DASHBOARD"
-        );
-        List<String> tenantAdminMenus = List.of(
-                "DASHBOARD"
-        );
+        List<String> academicMenuCodes = List.of("ACADEMICS", "DEPARTMENTS_LIST", "FACULTIES_LIST", "PROGRAMS_LIST", "ACADEMIC_YEARS_LIST", "SEMESTERS_LIST", "SECTIONS_LIST", "SUBJECTS_LIST", "PROGRAM_SUBJECTS_LIST", "STUDENTS_LIST", "STUDENT_ENROLLMENTS_LIST");
+        List<String> academics = academicMenuCodes;
+        List<String> collegeAdminMenus = new ArrayList<>(List.of("DASHBOARD"));
+        collegeAdminMenus.addAll(academics);
         List<String> staffMenus = List.of("DASHBOARD");
         List<String> basicMenus = List.of("DASHBOARD");
 
-        createTemplate(UserType.SUPER_ADMIN, "Super Admin Menu Template", allMenus, menus);
-        createTemplate(UserType.SYSTEM_ADMIN, "System Admin Menu Template", allMenus, menus);
+        List<String> globalMenus = allMenus.stream().filter(code -> !academicMenuCodes.contains(code)).toList();
+        createTemplate(UserType.SUPER_ADMIN, "Super Admin Menu Template", globalMenus, menus);
+        createTemplate(UserType.SYSTEM_ADMIN, "System Admin Menu Template", globalMenus, menus);
         createTemplate(UserType.COLLEGE_ADMIN, "College Admin Menu Template", collegeAdminMenus, menus);
         createTemplate(UserType.COLLEGE_BRANCH, "College Branch Menu Template", staffMenus, menus);
         createTemplate(UserType.PRINCIPAL, "Principal Menu Template", staffMenus, menus);
