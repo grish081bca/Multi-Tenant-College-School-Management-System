@@ -5,6 +5,11 @@ import com.college.erp.collegemanagementsystem.enums.Status;
 import com.college.erp.collegemanagementsystem.service.AcademicManagementService;
 import com.college.erp.collegemanagementsystem.service.AcademicModuleService;
 import com.college.erp.collegemanagementsystem.service.EntityChangeLogService;
+import com.college.erp.collegemanagementsystem.service.TenantService;
+import com.college.erp.collegemanagementsystem.exception.ValidationException;
+import com.college.erp.collegemanagementsystem.security.AuthenticatedUserPrincipal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +23,10 @@ public abstract class AbstractAcademicWebController {
     private final AcademicModuleService service;
     private final AcademicManagementService workflow;
     private final EntityChangeLogService changeLogs;
+    private final TenantService tenants;
 
-    protected AbstractAcademicWebController(AcademicModuleService service, AcademicManagementService workflow, EntityChangeLogService changeLogs) {
-        this.service = service; this.workflow = workflow; this.changeLogs = changeLogs;
+    protected AbstractAcademicWebController(AcademicModuleService service, AcademicManagementService workflow, EntityChangeLogService changeLogs, TenantService tenants) {
+        this.service = service; this.workflow = workflow; this.changeLogs = changeLogs; this.tenants = tenants;
     }
     protected abstract String module();
     private String base() { return "/web/" + module(); }
@@ -37,73 +43,80 @@ public abstract class AbstractAcademicWebController {
         String q = parameters.get("q");
         Status status = parseStatus(parameters.get("status"));
         Integer page = parseInt(parameters.get("page"), 1), size = parseInt(parameters.get("size"), 10);
-        model.addAttribute("page", service.search(q, filters, status, page, size));
+        Long tenantId = parseLong(parameters.get("tenantId"));
+        model.addAttribute("page", service.search(q, filters, status, page, size, tenantId));
         model.addAttribute("module", module()); model.addAttribute("moduleTitle", title());
         model.addAttribute("q", q); model.addAttribute("selectedStatus", status); model.addAttribute("statuses", Status.values());
+        model.addAttribute("systemAdmin", isSystemAdmin()); model.addAttribute("selectedTenantId", tenantId);
+        if (isSystemAdmin()) model.addAttribute("tenants", tenants.getAllTenants());
         model.addAttribute("academicFilters", filterFields()); model.addAttribute("selectedFilters", filters);
-        Map<String, Object> retained = new LinkedHashMap<>(); retained.put("q", q); retained.putAll(filters); retained.put("status", status);
+        Map<String, Object> retained = new LinkedHashMap<>(); retained.put("q", q); retained.putAll(filters); retained.put("status", status); retained.put("tenantId", tenantId);
         WebPagination.add(model, base(), size, retained);
         return viewPrefix() + "-list";
     }
 
     @GetMapping("/add")
-    public String addForm(Model model) { prepareForm(new AcademicRecordDTO(), model); model.addAttribute("isEdit", false); return viewPrefix() + "-form"; }
+    public String addForm(@RequestParam(required = false) Long tenantId, Model model) { prepareForm(new AcademicRecordDTO(), tenantId, model); model.addAttribute("isEdit", false); return viewPrefix() + "-form"; }
 
     @PostMapping
-    public String create(@ModelAttribute("record") AcademicRecordDTO form, BindingResult binding, RedirectAttributes flash) {
-        if (binding.hasErrors()) { flash.addFlashAttribute("error", bindingMessage(binding)); flash.addFlashAttribute("academicForm", form); return "redirect:" + base() + "/add"; }
-        try { service.save(null, form, null); flash.addFlashAttribute("success", title() + " created successfully."); }
-        catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); flash.addFlashAttribute("academicForm", form); return "redirect:" + base() + "/add"; }
-        return "redirect:" + base();
+    public String create(@ModelAttribute("record") AcademicRecordDTO form, @RequestParam(required = false) Long tenantId, BindingResult binding, RedirectAttributes flash) {
+        if (binding.hasErrors()) { flash.addFlashAttribute("error", bindingMessage(binding)); flash.addFlashAttribute("academicForm", form); return redirectAdd(tenantId); }
+        try { service.save(null, form, null, tenantId); flash.addFlashAttribute("success", title() + " created successfully."); }
+        catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); flash.addFlashAttribute("academicForm", form); return redirectAdd(tenantId); }
+        return redirectList(tenantId);
     }
 
     @GetMapping("/{id}/edit")
-    public String editForm(@PathVariable Long id, Model model, RedirectAttributes flash) {
-        try { prepareForm(service.get(id), model); model.addAttribute("isEdit", true); return viewPrefix() + "-form"; }
-        catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); return "redirect:" + base(); }
+    public String editForm(@PathVariable Long id, @RequestParam(required = false) Long tenantId, Model model, RedirectAttributes flash) {
+        try { prepareForm(service.get(id, tenantId), tenantId, model); model.addAttribute("isEdit", true); return viewPrefix() + "-form"; }
+        catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); return redirectList(tenantId); }
     }
 
     @PostMapping("/{id}")
     public String update(@PathVariable Long id, @ModelAttribute("record") AcademicRecordDTO form, BindingResult binding,
-                         @RequestParam(required = false) String remarks, RedirectAttributes flash) {
-        if (binding.hasErrors()) { flash.addFlashAttribute("error", bindingMessage(binding)); flash.addFlashAttribute("academicForm", form); return "redirect:" + base() + "/" + id + "/edit"; }
-        try { service.save(id, form, remarks); flash.addFlashAttribute("success", title() + " updated successfully."); }
-        catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); flash.addFlashAttribute("academicForm", form); return "redirect:" + base() + "/" + id + "/edit"; }
-        return "redirect:" + base();
+                         @RequestParam(required = false) String remarks, @RequestParam(required = false) Long tenantId, RedirectAttributes flash) {
+        if (binding.hasErrors()) { flash.addFlashAttribute("error", bindingMessage(binding)); flash.addFlashAttribute("academicForm", form); return redirectEdit(id, tenantId); }
+        try { service.save(id, form, remarks, tenantId); flash.addFlashAttribute("success", title() + " updated successfully."); }
+        catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); flash.addFlashAttribute("academicForm", form); return redirectEdit(id, tenantId); }
+        return redirectList(tenantId);
     }
 
     @GetMapping("/{id}")
-    public String view(@PathVariable Long id, Model model, RedirectAttributes flash) {
+    public String view(@PathVariable Long id, @RequestParam(required = false) Long tenantId, Model model, RedirectAttributes flash) {
         try {
-            AcademicRecordDTO record = service.get(id); model.addAttribute("record", record); model.addAttribute("module", module()); model.addAttribute("moduleTitle", title());
+            AcademicRecordDTO record = service.get(id, tenantId); model.addAttribute("record", record); model.addAttribute("module", module()); model.addAttribute("moduleTitle", title()); model.addAttribute("selectedTenantId", record.getTenantId()); model.addAttribute("systemAdmin", isSystemAdmin());
             model.addAttribute("changeLogs", changeLogs.getRecentChanges(entityName(), id)); return viewPrefix() + "-detail";
-        } catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); return "redirect:" + base(); }
+        } catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); return redirectList(tenantId); }
     }
 
     @PostMapping("/{id}/status")
-    public String status(@PathVariable Long id, @RequestParam Status status, @RequestParam(required = false) String remarks, RedirectAttributes flash) {
-        try { service.changeStatus(id, status, remarks); flash.addFlashAttribute("success", title() + " status updated successfully."); }
+    public String status(@PathVariable Long id, @RequestParam Status status, @RequestParam(required = false) String remarks, @RequestParam(required = false) Long tenantId, RedirectAttributes flash) {
+        try { service.changeStatus(id, status, remarks, tenantId); flash.addFlashAttribute("success", title() + " status updated successfully."); }
         catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); }
-        return "redirect:" + base();
+        return redirectList(tenantId);
     }
 
     @PostMapping("/{id}/delete")
-    public String delete(@PathVariable Long id, RedirectAttributes flash) {
-        try { service.delete(id); flash.addFlashAttribute("success", title() + " deleted successfully."); }
+    public String delete(@PathVariable Long id, @RequestParam(required = false) Long tenantId, RedirectAttributes flash) {
+        try { service.delete(id, tenantId); flash.addFlashAttribute("success", title() + " deleted successfully."); }
         catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); }
-        return "redirect:" + base();
+        return redirectList(tenantId);
     }
 
-    private void prepareForm(AcademicRecordDTO record, Model model) {
+    private void prepareForm(AcademicRecordDTO record, Long requestedTenantId, Model model) {
         if (model.containsAttribute("academicForm")) record = (AcademicRecordDTO) model.asMap().get("academicForm");
+        Long tenantId = record.getTenantId() != null ? record.getTenantId() : requestedTenantId;
+        record.setTenantId(tenantId);
         model.addAttribute("record", record); model.addAttribute("module", module()); model.addAttribute("moduleTitle", title());
         model.addAttribute("statuses", Status.values()); model.addAttribute("today", java.time.LocalDate.now());
+        model.addAttribute("systemAdmin", isSystemAdmin()); model.addAttribute("selectedTenantId", tenantId);
+        if (isSystemAdmin()) model.addAttribute("tenants", tenants.getAllTenants());
         switch (module()) {
-            case "departments" -> model.addAttribute("faculties", workflow.options("faculties"));
-            case "programs" -> { model.addAttribute("faculties", workflow.options("faculties")); model.addAttribute("departments", workflow.options("departments")); }
-            case "sections" -> { model.addAttribute("programs", workflow.options("programs")); model.addAttribute("academicYears", workflow.options("academic-years")); model.addAttribute("semesters", workflow.options("semesters")); }
-            case "program-subjects" -> { model.addAttribute("programs", workflow.options("programs")); model.addAttribute("semesters", workflow.options("semesters")); model.addAttribute("subjects", workflow.options("subjects")); }
-            case "student-enrollments" -> { model.addAttribute("students", workflow.options("students")); model.addAttribute("programs", workflow.options("programs")); model.addAttribute("academicYears", workflow.options("academic-years")); model.addAttribute("semesters", workflow.options("semesters")); model.addAttribute("sections", workflow.options("sections")); }
+            case "departments" -> model.addAttribute("faculties", workflow.options("faculties", tenantId));
+            case "programs" -> { model.addAttribute("faculties", workflow.options("faculties", tenantId)); model.addAttribute("departments", workflow.options("departments", tenantId)); }
+            case "sections" -> { model.addAttribute("programs", workflow.options("programs", tenantId)); model.addAttribute("academicYears", workflow.options("academic-years", tenantId)); model.addAttribute("semesters", workflow.options("semesters", tenantId)); }
+            case "program-subjects" -> { model.addAttribute("programs", workflow.options("programs", tenantId)); model.addAttribute("semesters", workflow.options("semesters", tenantId)); model.addAttribute("subjects", workflow.options("subjects", tenantId)); }
+            case "student-enrollments" -> { model.addAttribute("students", workflow.options("students", tenantId)); model.addAttribute("programs", workflow.options("programs", tenantId)); model.addAttribute("academicYears", workflow.options("academic-years", tenantId)); model.addAttribute("semesters", workflow.options("semesters", tenantId)); model.addAttribute("sections", workflow.options("sections", tenantId)); }
             default -> { }
         }
     }
@@ -135,4 +148,15 @@ public abstract class AbstractAcademicWebController {
     private String message(Exception ex) { return ex.getMessage() == null ? "The request could not be completed." : ex.getMessage(); }
     private String bindingMessage(BindingResult binding) { return binding.getFieldErrors().stream().map(error -> error.getField() + ": " + error.getDefaultMessage()).collect(Collectors.joining("; ")); }
     private String entityName() { return switch (module()) { case "academic-years" -> "AcademicYear"; case "program-subjects" -> "ProgramSubject"; case "student-enrollments" -> "StudentEnrollment"; default -> title().replace(" ", ""); }; }
+    private boolean isSystemAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getPrincipal() instanceof AuthenticatedUserPrincipal principal && principal.getUserType() == com.college.erp.collegemanagementsystem.enums.UserType.SYSTEM_ADMIN;
+    }
+    private String redirectAdd(Long tenantId) { return "redirect:" + base() + "/add" + (tenantId == null ? "" : "?tenantId=" + tenantId); }
+    private String redirectEdit(Long id, Long tenantId) { return "redirect:" + base() + "/" + id + "/edit" + (tenantId == null ? "" : "?tenantId=" + tenantId); }
+    private String redirectList(Long tenantId) { return "redirect:" + base() + (tenantId == null ? "" : "?tenantId=" + tenantId); }
+    private Long parseLong(String value) {
+        if (value == null || value.isBlank()) return null;
+        try { return Long.valueOf(value); } catch (NumberFormatException ex) { throw new ValidationException("Tenant filter must be a valid ID."); }
+    }
 }

@@ -1,8 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ include file="fragments/header.jspf" %>
-<section class="page-heading"><div><p class="eyebrow">Academic administration</p><h1>${isEdit ? 'Edit' : 'Add'} ${moduleTitle}</h1></div><a class="button secondary" href="<c:url value='/web/${module}'/>">Back to list</a></section>
+<section class="page-heading"><div><p class="eyebrow">Academic administration</p><h1>${isEdit ? 'Edit' : 'Add'} ${moduleTitle}</h1></div><c:url var="academicListUrl" value="/web/${module}"><c:if test="${systemAdmin and not empty selectedTenantId}"><c:param name="tenantId" value="${selectedTenantId}"/></c:if></c:url><a class="button secondary" href="${academicListUrl}">Back to list</a></section>
 <section class="form-panel"><c:choose><c:when test="${isEdit}"><c:url var="formAction" value="/web/${module}/${record.id}"/></c:when><c:otherwise><c:url var="formAction" value="/web/${module}"/></c:otherwise></c:choose>
 <form class="form-grid enterprise-form" action="${formAction}" method="post">
+    <c:if test="${systemAdmin}"><c:choose><c:when test="${isEdit}"><input type="hidden" name="tenantId" value="${selectedTenantId}"><label>Tenant<input value="<c:out value='${record.tenantName}'/>" readonly></label></c:when><c:otherwise><label>Tenant<select id="academicTenantSelect" name="tenantId" required><option value="">Select tenant to load its records</option><c:forEach items="${tenants}" var="tenant"><option value="${tenant.id}" ${tenant.id == selectedTenantId ? 'selected' : ''}><c:out value="${tenant.tenantName}"/></option></c:forEach></select></label></c:otherwise></c:choose></c:if>
     <c:if test="${module != 'students' and module != 'student-enrollments' and module != 'program-subjects'}"><label>Code<input name="code" value="<c:out value='${record.code}'/>" maxlength="50" required></label><label>Name<input name="name" value="<c:out value='${record.name}'/>" maxlength="160" required></label></c:if>
     <c:if test="${module == 'students'}"><label>Registration number<input name="registrationNumber" value="<c:out value='${record.registrationNumber}'/>" maxlength="50" required></label><label>First name<input name="firstName" value="<c:out value='${record.firstName}'/>" maxlength="100" required></label><label>Middle name<input name="middleName" value="<c:out value='${record.middleName}'/>" maxlength="100"></label><label>Last name<input name="lastName" value="<c:out value='${record.lastName}'/>" maxlength="100" required></label><label>Email<input type="email" name="email" value="<c:out value='${record.email}'/>" maxlength="200"></label><label>Phone<input name="phone" value="<c:out value='${record.phone}'/>" maxlength="30"></label><label>Date of birth<input type="date" name="dateOfBirth" value="<c:out value='${record.dateOfBirth}'/>" max="<c:out value='${today}'/>"></label><label>Address<input name="address" value="<c:out value='${record.address}'/>" maxlength="500"></label></c:if>
     <c:if test="${module == 'student-enrollments'}"><label>Student<select name="studentId" required><option value="">Select student</option><c:forEach items="${students}" var="x"><option value="${x.id}" ${x.id == record.studentId ? 'selected' : ''}><c:out value="${x.registrationNumber}"/> — <c:out value="${x.name}"/></option></c:forEach></select></label></c:if>
@@ -17,5 +18,12 @@
     <c:if test="${module != 'students' and module != 'student-enrollments' and module != 'program-subjects'}"><label>Description<textarea name="description" rows="3"><c:out value="${record.description}"/></textarea></label></c:if>
     <label>Status<select name="status"><c:forEach items="${statuses}" var="value"><option value="${value}" ${value == record.status ? 'selected' : ''}>${value}</option></c:forEach></select></label>
     <c:if test="${isEdit}"><label>Remarks (optional)<textarea name="remarks" rows="2"></textarea></label></c:if>
-    <div class="form-actions"><button class="primary" type="submit">${isEdit ? 'Update' : 'Create'} ${moduleTitle}</button><a class="button secondary" href="<c:url value='/web/${module}'/>">Cancel</a></div>
-</form></section><%@ include file="fragments/footer.jspf" %>
+    <div class="form-actions"><button class="primary" type="submit">${isEdit ? 'Update' : 'Create'} ${moduleTitle}</button><a class="button secondary" href="${academicListUrl}">Cancel</a></div>
+</form></section>
+<c:if test="${systemAdmin and not isEdit}"><script>
+    document.getElementById('academicTenantSelect').addEventListener('change', function () {
+        var target = '<c:url value="/web/${module}/add"/>', value = this.value;
+        window.location.assign(value ? target + '?tenantId=' + encodeURIComponent(value) : target);
+    });
+</script></c:if>
+<%@ include file="fragments/footer.jspf" %>

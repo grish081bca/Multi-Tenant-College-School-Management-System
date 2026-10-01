@@ -28,7 +28,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
-/** Tenant-scoped application service for the academic and student modules. */
+/** Tenant-isolated application service for the academic and student modules, with scoped System Admin access. */
 @Service
 @Transactional
 public class AcademicManagementServiceImpl implements AcademicManagementService {
@@ -50,9 +50,16 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
     @Override @Transactional(readOnly = true)
     public PagablePage<AcademicRecordDTO> search(String module, String q, Map<String, String> filters, Status status, Integer page, Integer size) {
         String moduleKey = normalizeModule(module);
-        long currentTenantId = tenantId();
+        return search(module, q, filters, status, page, size, null);
+    }
+
+    @Override @Transactional(readOnly = true)
+    public PagablePage<AcademicRecordDTO> search(String module, String q, Map<String, String> filters, Status status, Integer page, Integer size, Long requestedTenantId) {
+        String moduleKey = normalizeModule(module);
+        Long currentTenantId = resolveTenantId(requestedTenantId, false);
         Specification<Object> specification = (root, query, builder) -> {
-            Predicate predicate = builder.equal(root.get("tenant").get("id"), currentTenantId);
+            Predicate predicate = builder.conjunction();
+            if (currentTenantId != null) predicate = builder.and(predicate, builder.equal(root.get("tenant").get("id"), currentTenantId));
             if (status != null) predicate = builder.and(predicate, builder.equal(root.get("status"), status));
             if (q != null && !q.isBlank()) {
                 String term = "%" + q.trim().toLowerCase(Locale.ROOT) + "%";
@@ -69,7 +76,7 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
                     predicate = builder.and(predicate, builder.like(builder.lower(searchPath(root, field).as(String.class)), term));
                 }
             }
-            if (query.getResultType() != Long.class && query.getResultType() != long.class) fetchAssociations(root, moduleKey);
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) { root.fetch("tenant", JoinType.LEFT); fetchAssociations(root, moduleKey); }
             return predicate;
         };
         int currentPage = PagablePage.normalizePage(page), pageSize = PagablePage.normalizeSize(size);
@@ -94,13 +101,22 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
     }
 
     @Override @Transactional(readOnly = true)
-    public AcademicRecordDTO get(String module, Long id) { return toDto(module, scopedEntity(module, id)); }
+    public AcademicRecordDTO get(String module, Long id) { return get(module, id, null); }
 
     @Override @Transactional(readOnly = true)
-    public List<AcademicRecordDTO> options(String module) {
-        String moduleKey = normalizeModule(module); long currentTenantId = tenantId();
+    public AcademicRecordDTO get(String module, Long id, Long requestedTenantId) {
+        return toDto(module, scopedEntity(module, id, resolveTenantId(requestedTenantId, true)));
+    }
+
+    @Override @Transactional(readOnly = true)
+    public List<AcademicRecordDTO> options(String module) { return options(module, null); }
+
+    @Override @Transactional(readOnly = true)
+    public List<AcademicRecordDTO> options(String module, Long requestedTenantId) {
+        String moduleKey = normalizeModule(module); Long currentTenantId = resolveTenantId(requestedTenantId, false);
+        if (currentTenantId == null) return List.of();
         Specification<Object> specification = (root, query, builder) -> {
-            if (query.getResultType() != Long.class && query.getResultType() != long.class) fetchAssociations(root, moduleKey);
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) { root.fetch("tenant", JoinType.LEFT); fetchAssociations(root, moduleKey); }
             return builder.equal(root.get("tenant").get("id"), currentTenantId);
         };
         return repositories.findAll(moduleKey, specification, Sort.by(Sort.Direction.ASC, "id")).stream().map(row -> toDto(moduleKey, row)).toList();
@@ -108,12 +124,18 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
 
     @Override
     public AcademicRecordDTO save(String module, Long id, AcademicRecordDTO request, String remarks) {
+        return save(module, id, request, remarks, null);
+    }
+
+    @Override
+    public AcademicRecordDTO save(String module, Long id, AcademicRecordDTO request, String remarks, Long requestedTenantId) {
         if (request == null) throw new ValidationException("Form data is required.");
-        Object entity = id == null ? newEntity(module) : scopedEntity(module, id);
+        long selectedTenantId = Objects.requireNonNull(resolveTenantId(requestedTenantId, true));
+        Object entity = id == null ? newEntity(module) : scopedEntity(module, id, selectedTenantId);
         AcademicRecordDTO before = id == null ? null : toDto(module, entity);
         Status oldStatus = before == null ? null : before.getStatus();
         Status targetStatus = request.getStatus() != null ? request.getStatus() : (oldStatus != null ? oldStatus : Status.ACTIVE);
-        Tenant tenant = entityManager.getReference(Tenant.class, tenantId());
+        Tenant tenant = entityManager.getReference(Tenant.class, selectedTenantId);
         if (entity instanceof ProgramSubject ps) {
             if (id == null) ps.setTenant(tenant);
             ps.setStatus(targetStatus);
@@ -137,13 +159,13 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
             enrollment.setStatus(targetStatus);
         }
         validateInput(module, request);
-        assignRelationships(module, entity, request, id);
+        assignRelationships(module, entity, request, id, selectedTenantId);
         if (entity instanceof ProgramSubject ps) { ps.setCode(ps.getSubject().getCode()); ps.setName(ps.getSubject().getName()); ps.setDescription(null); }
         if (entity instanceof Semester semester) semester.setSequenceNumber(request.getSequenceNumber());
         if (entity instanceof Subject subject) subject.setCreditHours(request.getCreditHours());
-        validateUnique(module, id, entity);
-        if (entity instanceof Department department) validateDepartmentFacultyMove(department, department.getFaculty());
-        if (entity instanceof Section section && id != null) validateSectionMove(before, section);
+        validateUnique(module, id, entity, selectedTenantId);
+        if (entity instanceof Department department) validateDepartmentFacultyMove(department, department.getFaculty(), selectedTenantId);
+        if (entity instanceof Section section && id != null) validateSectionMove(before, section, selectedTenantId);
         Object saved = repositories.save(normalizeModule(module), entity);
         AcademicRecordDTO after = toDto(module, saved);
         logDiff(module, before, after, id == null ? EntityChangeAction.CREATED : EntityChangeAction.UPDATED, remarks);
@@ -153,8 +175,14 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
 
     @Override
     public void changeStatus(String module, Long id, Status status, String remarks) {
+        changeStatus(module, id, status, remarks, null);
+    }
+
+    @Override
+    public void changeStatus(String module, Long id, Status status, String remarks, Long requestedTenantId) {
         if (status == null) throw new ValidationException("Status is required.");
-        Object entity = scopedEntity(module, id); Status old;
+        long selectedTenantId = Objects.requireNonNull(resolveTenantId(requestedTenantId, true));
+        Object entity = scopedEntity(module, id, selectedTenantId); Status old;
         if (entity instanceof TenantOwnedEntity owned) { old = owned.getStatus(); owned.setStatus(status); }
         else if (entity instanceof Student student) { old = student.getStatus(); student.setStatus(status); }
         else if (entity instanceof StudentEnrollment enrollment) { old = enrollment.getStatus(); enrollment.setStatus(status); }
@@ -165,7 +193,13 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
 
     @Override
     public void delete(String module, Long id) {
-        Object entity = scopedEntity(module, id);
+        delete(module, id, null);
+    }
+
+    @Override
+    public void delete(String module, Long id, Long requestedTenantId) {
+        long selectedTenantId = Objects.requireNonNull(resolveTenantId(requestedTenantId, true));
+        Object entity = scopedEntity(module, id, selectedTenantId);
         AcademicRecordDTO deleted = toDto(module, entity);
         changeLogService.logChange(entityName(module), id, EntityChangeAction.DELETED, "record", deleted.getName() != null ? deleted.getName() : deleted.getCode(), null, "Record deleted.");
         repositories.delete(normalizeModule(module), entity);
@@ -176,8 +210,7 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
         }
     }
 
-    private void assignRelationships(String module, Object entity, AcademicRecordDTO dto, Long id) {
-        long tenant = tenantId();
+    private void assignRelationships(String module, Object entity, AcademicRecordDTO dto, Long id, long tenant) {
         if (entity instanceof Department x) x.setFaculty(ref(Faculty.class, dto.getFacultyId(), tenant, "Faculty"));
         if (entity instanceof Program x) {
             Faculty faculty = ref(Faculty.class, dto.getFacultyId(), tenant, "Faculty");
@@ -206,7 +239,7 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
             Map<String, Object> enrollmentKey = new LinkedHashMap<>();
             enrollmentKey.put("student", student); enrollmentKey.put("program", program);
             enrollmentKey.put("academicYear", year); enrollmentKey.put("semester", semester);
-            if (hasDuplicate(StudentEnrollment.class, id, enrollmentKey)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Student already has an enrollment for this program, academic year and semester.");
+            if (hasDuplicate(StudentEnrollment.class, id, enrollmentKey, tenant)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Student already has an enrollment for this program, academic year and semester.");
         }
     }
 
@@ -217,16 +250,26 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
         return entity;
     }
 
-    private Object scopedEntity(String module, Long id) {
+    private Object scopedEntity(String module, Long id, long tenantId) {
         if (id == null) throw new ValidationException("Record id is required.");
-        Object entity = repositories.findByIdAndTenantId(normalizeModule(module), id, tenantId());
+        Object entity = repositories.findByIdAndTenantId(normalizeModule(module), id, tenantId);
         if (entity == null) throw new ResourceNotFoundException(entityName(module) + " not found.");
         return entity;
     }
     private Object newEntity(String module) { try { return entityType(module).getDeclaredConstructor().newInstance(); } catch (ReflectiveOperationException e) { throw new IllegalArgumentException("Unsupported module.", e); } }
-    private long tenantId() {
+    private Long resolveTenantId(Long requestedTenantId, boolean required) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !(auth.getPrincipal() instanceof AuthenticatedUserPrincipal p) || p.getTenantId() == null) throw new org.springframework.security.access.AccessDeniedException("A tenant account is required.");
+        if (auth == null || !(auth.getPrincipal() instanceof AuthenticatedUserPrincipal p)) throw new org.springframework.security.access.AccessDeniedException("An authenticated account is required.");
+        if (p.getUserType() == com.college.erp.collegemanagementsystem.enums.UserType.SYSTEM_ADMIN) {
+            if (requestedTenantId == null) {
+                if (required) throw new ValidationException("Select a tenant to continue.");
+                return null;
+            }
+            if (entityManager.find(Tenant.class, requestedTenantId) == null) throw new ValidationException("Selected tenant does not exist.");
+            return requestedTenantId;
+        }
+        if (p.getTenantId() == null) throw new org.springframework.security.access.AccessDeniedException("A tenant account is required.");
+        if (requestedTenantId != null && !Objects.equals(requestedTenantId, p.getTenantId())) throw new org.springframework.security.access.AccessDeniedException("You cannot access another tenant's records.");
         return p.getTenantId();
     }
     private Class<?> entityType(String module) {
@@ -282,27 +325,27 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
         if (value != null && value.trim().length() > max) throw new ValidationException(label + " must be at most " + max + " characters.");
     }
 
-    private void validateUnique(String module, Long id, Object entity) {
+    private void validateUnique(String module, Long id, Object entity, long tenantId) {
         if (entity instanceof TenantOwnedEntity owned) {
-            if (!(entity instanceof ProgramSubject) && hasDuplicate(entity.getClass(), id, Map.of("code", owned.getCode()))) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Code already exists in this tenant.");
-            if (!(entity instanceof Section) && !(entity instanceof ProgramSubject) && hasDuplicate(entity.getClass(), id, Map.of("name", owned.getName()))) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Name already exists in this tenant.");
+            if (!(entity instanceof ProgramSubject) && hasDuplicate(entity.getClass(), id, Map.of("code", owned.getCode()), tenantId)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Code already exists in this tenant.");
+            if (!(entity instanceof Section) && !(entity instanceof ProgramSubject) && hasDuplicate(entity.getClass(), id, Map.of("name", owned.getName()), tenantId)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Name already exists in this tenant.");
             if (entity instanceof Section section) {
                 Map<String, Object> sectionKey = new LinkedHashMap<>(); sectionKey.put("program", section.getProgram()); sectionKey.put("academicYear", section.getAcademicYear()); sectionKey.put("semester", section.getSemester()); sectionKey.put("name", section.getName());
-                if (hasDuplicate(Section.class, id, sectionKey)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Section name already exists for this program, academic year and semester.");
+                if (hasDuplicate(Section.class, id, sectionKey, tenantId)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Section name already exists for this program, academic year and semester.");
             }
             if (entity instanceof ProgramSubject ps) {
                 Map<String, Object> curriculumKey = new LinkedHashMap<>(); curriculumKey.put("program", ps.getProgram()); curriculumKey.put("subject", ps.getSubject()); curriculumKey.put("semester", ps.getSemester());
-                if (hasDuplicate(ProgramSubject.class, id, curriculumKey)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Subject is already assigned to this program and semester.");
+                if (hasDuplicate(ProgramSubject.class, id, curriculumKey, tenantId)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Subject is already assigned to this program and semester.");
             }
         } else if (entity instanceof Student student) {
-            if (hasDuplicate(Student.class, id, Map.of("registrationNumber", student.getRegistrationNumber()))) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Registration number already exists in this tenant.");
-            if (student.getEmail() != null && hasDuplicate(Student.class, id, Map.of("email", student.getEmail()))) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Email already exists in this tenant.");
+            if (hasDuplicate(Student.class, id, Map.of("registrationNumber", student.getRegistrationNumber()), tenantId)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Registration number already exists in this tenant.");
+            if (student.getEmail() != null && hasDuplicate(Student.class, id, Map.of("email", student.getEmail()), tenantId)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Email already exists in this tenant.");
         }
     }
 
-    private boolean hasDuplicate(Class<?> type, Long id, Map<String, Object> fields) {
+    private boolean hasDuplicate(Class<?> type, Long id, Map<String, Object> fields, long tenantId) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder(); CriteriaQuery<Long> query = cb.createQuery(Long.class); Root<?> root = query.from(type);
-        List<Predicate> terms = new ArrayList<>(); terms.add(cb.equal(root.get("tenant").get("id"), tenantId()));
+        List<Predicate> terms = new ArrayList<>(); terms.add(cb.equal(root.get("tenant").get("id"), tenantId));
         fields.forEach((field, value) -> {
             Path<?> path = root.get(field);
             if (value instanceof TenantOwnedEntity || value instanceof Student || value instanceof StudentEnrollment || value instanceof Tenant) {
@@ -317,18 +360,18 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
         return entityManager.createQuery(query).getSingleResult() > 0;
     }
 
-    private void validateDepartmentFacultyMove(Department department, Faculty targetFaculty) {
+    private void validateDepartmentFacultyMove(Department department, Faculty targetFaculty, long tenantId) {
         if (department.getId() == null || targetFaculty == null) return;
         CriteriaBuilder cb = entityManager.getCriteriaBuilder(); CriteriaQuery<Long> query = cb.createQuery(Long.class); Root<Program> root = query.from(Program.class);
-        query.select(cb.count(root)).where(cb.equal(root.get("tenant").get("id"), tenantId()), cb.equal(root.get("department").get("id"), department.getId()), cb.notEqual(root.get("faculty").get("id"), targetFaculty.getId()));
+        query.select(cb.count(root)).where(cb.equal(root.get("tenant").get("id"), tenantId), cb.equal(root.get("department").get("id"), department.getId()), cb.notEqual(root.get("faculty").get("id"), targetFaculty.getId()));
         if (entityManager.createQuery(query).getSingleResult() > 0) throw new ValidationException("Department faculty cannot be changed while programs reference it. Update the programs first.");
     }
 
-    private void validateSectionMove(AcademicRecordDTO previous, Section updated) {
+    private void validateSectionMove(AcademicRecordDTO previous, Section updated, long tenantId) {
         boolean structureChanged = !Objects.equals(previous.getProgramId(), updated.getProgram().getId()) || !Objects.equals(previous.getAcademicYearId(), updated.getAcademicYear().getId()) || !Objects.equals(previous.getSemesterId(), updated.getSemester().getId());
         if (!structureChanged) return;
         CriteriaBuilder cb = entityManager.getCriteriaBuilder(); CriteriaQuery<Long> query = cb.createQuery(Long.class); Root<StudentEnrollment> root = query.from(StudentEnrollment.class);
-        query.select(cb.count(root)).where(cb.equal(root.get("tenant").get("id"), tenantId()), cb.equal(root.get("section").get("id"), previous.getId()));
+        query.select(cb.count(root)).where(cb.equal(root.get("tenant").get("id"), tenantId), cb.equal(root.get("section").get("id"), previous.getId()));
         if (entityManager.createQuery(query).getSingleResult() > 0) throw new ValidationException("Section program, academic year and semester cannot change while student enrollments reference it.");
     }
 
@@ -346,6 +389,7 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
     private AcademicRecordDTO toDto(String module, Object entity) {
         AcademicRecordDTO d = new AcademicRecordDTO(); d.setModule(normalizeModule(module));
         if (entity instanceof TenantOwnedEntity x) {
+            d.setTenantId(x.getTenant().getId()); d.setTenantName(x.getTenant().getTenantName());
             d.setId(x.getId()); d.setCode(x.getCode()); d.setName(x.getName()); d.setDescription(x.getDescription()); d.setStatus(x.getStatus());
             if (x instanceof Department y) { d.setFacultyId(y.getFaculty().getId()); d.setFacultyName(y.getFaculty().getName()); }
             if (x instanceof Program y) { d.setFacultyId(y.getFaculty().getId()); d.setFacultyName(y.getFaculty().getName()); d.setDepartmentId(y.getDepartment().getId()); d.setDepartmentName(y.getDepartment().getName()); }
@@ -355,8 +399,10 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
             if (x instanceof ProgramSubject y) { d.setCode(y.getSubject().getCode()); d.setName(y.getSubject().getName()); d.setProgramId(y.getProgram().getId()); d.setProgramName(y.getProgram().getName()); d.setSubjectId(y.getSubject().getId()); d.setSubjectName(y.getSubject().getName()); d.setSemesterId(y.getSemester().getId()); d.setSemesterName(y.getSemester().getName()); }
             if (x instanceof ProgramSubject y) { d.setProgramId(y.getProgram().getId()); d.setProgramName(y.getProgram().getName()); d.setSubjectId(y.getSubject().getId()); d.setSubjectName(y.getSubject().getName()); d.setSemesterId(y.getSemester().getId()); d.setSemesterName(y.getSemester().getName()); }
         } else if (entity instanceof Student x) {
+            d.setTenantId(x.getTenant().getId()); d.setTenantName(x.getTenant().getTenantName());
             d.setId(x.getId()); d.setRegistrationNumber(x.getRegistrationNumber()); d.setFirstName(x.getFirstName()); d.setMiddleName(x.getMiddleName()); d.setLastName(x.getLastName()); d.setEmail(x.getEmail()); d.setPhone(x.getPhone()); d.setDateOfBirth(x.getDateOfBirth()); d.setAddress(x.getAddress()); d.setStatus(x.getStatus()); d.setName(x.getFirstName() + " " + x.getLastName());
         } else if (entity instanceof StudentEnrollment x) {
+            d.setTenantId(x.getTenant().getId()); d.setTenantName(x.getTenant().getTenantName());
             d.setId(x.getId()); d.setCode("ENR-" + x.getId()); d.setName(x.getStudent().getRegistrationNumber() + " - " + x.getProgram().getName()); d.setStatus(x.getStatus()); d.setStudentId(x.getStudent().getId()); d.setStudentName(x.getStudent().getFirstName() + " " + x.getStudent().getLastName()); d.setProgramId(x.getProgram().getId()); d.setProgramName(x.getProgram().getName()); d.setAcademicYearId(x.getAcademicYear().getId()); d.setAcademicYearName(x.getAcademicYear().getName()); d.setSemesterId(x.getSemester().getId()); d.setSemesterName(x.getSemester().getName()); d.setSectionId(x.getSection().getId()); d.setSectionName(x.getSection().getName());
         }
         return d;

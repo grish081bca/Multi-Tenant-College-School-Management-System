@@ -1,12 +1,14 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ include file="fragments/header.jspf" %>
 <section class="page-heading">
-    <div><p class="eyebrow">Academic administration</p><h1>${moduleTitle}</h1><p class="muted">Manage ${moduleTitle.toLowerCase()} records for your college.</p></div>
-    <a class="button primary" href="<c:url value='/web/${module}/add'/>"><i class="fa-solid fa-plus"></i> Add ${moduleTitle}</a>
+    <div><p class="eyebrow">Academic administration</p><h1>${moduleTitle}</h1><p class="muted"><c:choose><c:when test="${systemAdmin}">Manage ${moduleTitle.toLowerCase()} records across tenants or filter by tenant.</c:when><c:otherwise>Manage ${moduleTitle.toLowerCase()} records for your college.</c:otherwise></c:choose></p></div>
+    <c:url var="addAcademicUrl" value="/web/${module}/add"><c:if test="${systemAdmin and not empty selectedTenantId}"><c:param name="tenantId" value="${selectedTenantId}"/></c:if></c:url>
+    <a class="button primary" href="${addAcademicUrl}"><i class="fa-solid fa-plus"></i> Add ${moduleTitle}</a>
 </section>
 <section class="filter-panel">
     <form class="filter-grid" action="<c:url value='/web/${module}'/>" method="get">
         <label>Master Search<input name="q" value="<c:out value='${q}'/>" placeholder="Search all ${moduleTitle.toLowerCase()} columns"></label>
+        <c:if test="${systemAdmin}"><label>Tenant<select name="tenantId"><option value="">All tenants</option><c:forEach items="${tenants}" var="tenant"><option value="${tenant.id}" ${tenant.id == selectedTenantId ? 'selected' : ''}><c:out value="${tenant.tenantName}"/></option></c:forEach></select></label></c:if>
         <c:forEach items="${academicFilters}" var="filter"><label><c:out value="${filter.label}"/><input type="${filter.type}" name="${filter.key}" value="<c:out value='${selectedFilters[filter.key]}'/>" placeholder="Filter by ${filter.label.toLowerCase()}"></label></c:forEach>
         <label>Status<select name="status"><option value="">All statuses</option><c:forEach items="${statuses}" var="value"><option value="${value}" ${value == selectedStatus ? 'selected' : ''}>${value}</option></c:forEach></select></label>
         <label>Rows<select name="size"><option value="10" ${pageSize == 10 ? 'selected' : ''}>10</option><option value="25" ${pageSize == 25 ? 'selected' : ''}>25</option><option value="50" ${pageSize == 50 ? 'selected' : ''}>50</option><option value="100" ${pageSize == 100 ? 'selected' : ''}>100</option></select></label>
@@ -14,8 +16,13 @@
     </form>
 </section>
 <section class="panel"><div class="table-wrap"><table class="data-table">
-    <thead><tr><th>Code / Registration</th><th>Name</th><th>Academic details</th><th>Status</th><th>Action</th></tr></thead>
+    <thead><tr><c:if test="${systemAdmin}"><th>Tenant</th></c:if><th>Code / Registration</th><th>Name</th><th>Academic details</th><th>Status</th><th>Action</th></tr></thead>
     <tbody><c:forEach items="${page.objects}" var="record"><tr>
+        <c:url var="recordViewUrl" value="/web/${module}/${record.id}"><c:if test="${systemAdmin}"><c:param name="tenantId" value="${record.tenantId}"/></c:if></c:url>
+        <c:url var="recordEditUrl" value="/web/${module}/${record.id}/edit"><c:if test="${systemAdmin}"><c:param name="tenantId" value="${record.tenantId}"/></c:if></c:url>
+        <c:url var="recordStatusUrl" value="/web/${module}/${record.id}/status"><c:if test="${systemAdmin}"><c:param name="tenantId" value="${record.tenantId}"/></c:if></c:url>
+        <c:url var="recordDeleteUrl" value="/web/${module}/${record.id}/delete"><c:if test="${systemAdmin}"><c:param name="tenantId" value="${record.tenantId}"/></c:if></c:url>
+        <c:if test="${systemAdmin}"><td><c:out value="${record.tenantName}"/></td></c:if>
         <td><c:out value="${record.code}"/><c:if test="${module == 'students'}"><c:out value="${record.registrationNumber}"/></c:if></td>
         <td><c:choose><c:when test="${module == 'students'}"><c:out value="${record.firstName}"/> <c:out value="${record.lastName}"/></c:when><c:otherwise><c:out value="${record.name}"/></c:otherwise></c:choose></td>
         <td><c:choose>
@@ -30,9 +37,9 @@
             <c:otherwise><c:out value="${record.description}"/></c:otherwise>
         </c:choose></td>
         <td><span class="status-pill status-${record.status}"><c:out value="${record.status}"/></span></td>
-        <td class="actions-cell"><a class="action-button secondary" href="<c:url value='/web/${module}/${record.id}'/>"><i class="fa-solid fa-eye"></i><span>View</span></a><a class="action-button secondary" href="<c:url value='/web/${module}/${record.id}/edit'/>"><i class="fa-solid fa-pen-to-square"></i><span>Edit</span></a>
-            <button class="action-button secondary academic-status-trigger" type="button" data-action="<c:url value='/web/${module}/${record.id}/status'/>" data-status="${record.status}" data-name="<c:out value='${record.name}'/>"><i class="fa-solid fa-toggle-on" aria-hidden="true"></i><span>Change status</span></button>
-            <form class="action-form" method="post" action="<c:url value='/web/${module}/${record.id}/delete'/>"><button class="action-button secondary" type="submit" onclick="return confirm('Delete this ${moduleTitle.toLowerCase()} record?')"><i class="fa-solid fa-trash"></i><span>Delete</span></button></form>
+        <td class="actions-cell"><a class="action-button secondary" href="${recordViewUrl}"><i class="fa-solid fa-eye"></i><span>View</span></a><a class="action-button secondary" href="${recordEditUrl}"><i class="fa-solid fa-pen-to-square"></i><span>Edit</span></a>
+            <button class="action-button secondary academic-status-trigger" type="button" data-action="${recordStatusUrl}" data-status="${record.status}" data-name="<c:out value='${record.name}'/>"><i class="fa-solid fa-toggle-on" aria-hidden="true"></i><span>Change status</span></button>
+            <form class="action-form" method="post" action="${recordDeleteUrl}"><button class="action-button secondary" type="submit" onclick="return confirm('Delete this ${moduleTitle.toLowerCase()} record?')"><i class="fa-solid fa-trash"></i><span>Delete</span></button></form>
         </td>
     </tr></c:forEach></tbody>
 </table></div><%@ include file="fragments/data-table-empty.jspf" %><%@ include file="fragments/pagination.jspf" %></section>

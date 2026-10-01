@@ -160,14 +160,16 @@ public class MenuCreation {
                 "SUBJECT", "SUBJECTS_ADD", "SUBJECTS_LIST", "PROGRAM_SUBJECT", "PROGRAM_SUBJECTS_ADD", "PROGRAM_SUBJECTS_LIST",
                 "STUDENT", "STUDENTS_ADD", "STUDENTS_LIST", "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_ADD", "STUDENT_ENROLLMENTS_LIST");
         List<String> academics = academicMenuCodes;
+        List<String> globalMenus = allMenus.stream().filter(code -> !academicMenuCodes.contains(code)).toList();
         List<String> collegeAdminMenus = new ArrayList<>(List.of("DASHBOARD"));
         collegeAdminMenus.addAll(academics);
+        List<String> systemAdminMenus = new ArrayList<>(globalMenus);
+        systemAdminMenus.addAll(academics);
         List<String> staffMenus = List.of("DASHBOARD");
         List<String> basicMenus = List.of("DASHBOARD");
 
-        List<String> globalMenus = allMenus.stream().filter(code -> !academicMenuCodes.contains(code)).toList();
         createTemplate(UserType.SUPER_ADMIN, "Super Admin Menu Template", globalMenus, menus);
-        createTemplate(UserType.SYSTEM_ADMIN, "System Admin Menu Template", globalMenus, menus);
+        createTemplate(UserType.SYSTEM_ADMIN, "System Admin Menu Template", systemAdminMenus, menus);
         createTemplate(UserType.COLLEGE_ADMIN, "College Admin Menu Template", collegeAdminMenus, menus);
         createTemplate(UserType.COLLEGE_BRANCH, "College Branch Menu Template", staffMenus, menus);
         createTemplate(UserType.PRINCIPAL, "Principal Menu Template", staffMenus, menus);

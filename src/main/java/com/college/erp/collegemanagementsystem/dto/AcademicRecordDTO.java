@@ -9,6 +9,8 @@ import java.time.LocalDate;
 @Getter @Setter
 public class AcademicRecordDTO {
     private Long id;
+    private Long tenantId;
+    private String tenantName;
     private String module;
     private String code;
     private String name;
