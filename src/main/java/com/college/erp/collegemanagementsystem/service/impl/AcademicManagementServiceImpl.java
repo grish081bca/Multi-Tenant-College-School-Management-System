@@ -44,6 +44,11 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
 
     @Override @Transactional(readOnly = true)
     public PagablePage<AcademicRecordDTO> search(String module, String q, Status status, Integer page, Integer size) {
+        return search(module, q, Map.of(), status, page, size);
+    }
+
+    @Override @Transactional(readOnly = true)
+    public PagablePage<AcademicRecordDTO> search(String module, String q, Map<String, String> filters, Status status, Integer page, Integer size) {
         String moduleKey = normalizeModule(module);
         long currentTenantId = tenantId();
         Specification<Object> specification = (root, query, builder) -> {
@@ -55,12 +60,37 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
                 for (String field : searchFields(moduleKey)) searches.add(builder.like(builder.lower(searchPath(root, field).as(String.class)), term));
                 predicate = builder.and(predicate, builder.or(searches.toArray(Predicate[]::new)));
             }
+            if (filters != null) {
+                Map<String, String> allowedFilters = searchFilters(moduleKey);
+                for (Map.Entry<String, String> filter : filters.entrySet()) {
+                    String field = allowedFilters.get(filter.getKey());
+                    if (field == null || filter.getValue() == null || filter.getValue().isBlank()) continue;
+                    String term = "%" + filter.getValue().trim().toLowerCase(Locale.ROOT) + "%";
+                    predicate = builder.and(predicate, builder.like(builder.lower(searchPath(root, field).as(String.class)), term));
+                }
+            }
             if (query.getResultType() != Long.class && query.getResultType() != long.class) fetchAssociations(root, moduleKey);
             return predicate;
         };
         int currentPage = PagablePage.normalizePage(page), pageSize = PagablePage.normalizeSize(size);
         Page<?> results = repositories.findAll(moduleKey, specification, PageRequest.of(currentPage - 1, pageSize, Sort.by(Sort.Direction.DESC, "id")));
         return PagablePage.from(results.map(row -> toDto(moduleKey, row)));
+    }
+
+    private Map<String, String> searchFilters(String module) {
+        return switch (module) {
+            case "departments" -> Map.of("code", "code", "name", "name", "faculty", "faculty.name", "description", "description");
+            case "faculties" -> Map.of("code", "code", "name", "name", "description", "description");
+            case "programs" -> Map.of("code", "code", "name", "name", "faculty", "faculty.name", "department", "department.name", "description", "description");
+            case "academic-years" -> Map.of("code", "code", "name", "name", "description", "description");
+            case "semesters" -> Map.of("code", "code", "name", "name", "sequenceNumber", "sequenceNumber", "description", "description");
+            case "sections" -> Map.of("code", "code", "name", "name", "program", "program.name", "academicYear", "academicYear.name", "semester", "semester.name", "description", "description");
+            case "subjects" -> Map.of("code", "code", "name", "name", "creditHours", "creditHours", "description", "description");
+            case "program-subjects" -> Map.of("program", "program.name", "subjectCode", "subject.code", "subject", "subject.name", "semester", "semester.name");
+            case "students" -> Map.of("registrationNumber", "registrationNumber", "firstName", "firstName", "middleName", "middleName", "lastName", "lastName", "email", "email", "phone", "phone", "address", "address");
+            case "student-enrollments" -> Map.of("student", "student.registrationNumber", "program", "program.name", "academicYear", "academicYear.name", "semester", "semester.name", "section", "section.name");
+            default -> Map.of();
+        };
     }
 
     @Override @Transactional(readOnly = true)
@@ -211,12 +241,16 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
     private String entityName(String module) { return entityType(module).getSimpleName(); }
     private List<String> searchFields(String module) {
         return switch (normalizeModule(module)) {
-            case "students" -> List.of("registrationNumber", "firstName", "middleName", "lastName", "email", "phone", "status");
+            case "students" -> List.of("registrationNumber", "firstName", "middleName", "lastName", "email", "phone", "address", "dateOfBirth", "status");
             case "departments" -> List.of("code", "name", "description", "faculty.name", "status");
+            case "faculties" -> List.of("code", "name", "description", "status");
             case "programs" -> List.of("code", "name", "description", "faculty.name", "department.name", "status");
+            case "academic-years" -> List.of("code", "name", "description", "status");
+            case "semesters" -> List.of("code", "name", "sequenceNumber", "description", "status");
             case "sections" -> List.of("code", "name", "description", "program.name", "academicYear.name", "semester.name", "status");
             case "program-subjects" -> List.of("program.name", "subject.code", "subject.name", "semester.name", "status");
-            case "student-enrollments" -> List.of("student.registrationNumber", "student.firstName", "student.lastName", "program.name", "academicYear.name", "semester.name", "section.name", "status");
+            case "subjects" -> List.of("code", "name", "creditHours", "description", "status");
+            case "student-enrollments" -> List.of("student.registrationNumber", "student.firstName", "student.middleName", "student.lastName", "program.name", "academicYear.name", "semester.name", "section.name", "status");
             default -> List.of("code", "name", "description", "status");
         };
     }

@@ -6,6 +6,7 @@ import com.college.erp.collegemanagementsystem.enums.Status;
 
 public interface AcademicManagementService {
     PagablePage<AcademicRecordDTO> search(String module, String q, Status status, Integer page, Integer size);
+    PagablePage<AcademicRecordDTO> search(String module, String q, java.util.Map<String, String> filters, Status status, Integer page, Integer size);
     AcademicRecordDTO get(String module, Long id);
     java.util.List<AcademicRecordDTO> options(String module);
     AcademicRecordDTO save(String module, Long id, AcademicRecordDTO request, String remarks);

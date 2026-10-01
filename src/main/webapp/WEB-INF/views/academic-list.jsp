@@ -6,7 +6,8 @@
 </section>
 <section class="filter-panel">
     <form class="filter-grid" action="<c:url value='/web/${module}'/>" method="get">
-        <label>Search<input name="q" value="<c:out value='${q}'/>" placeholder="Search ${moduleTitle.toLowerCase()} records"></label>
+        <label>Master Search<input name="q" value="<c:out value='${q}'/>" placeholder="Search all ${moduleTitle.toLowerCase()} columns"></label>
+        <c:forEach items="${academicFilters}" var="filter"><label><c:out value="${filter.label}"/><input type="${filter.type}" name="${filter.key}" value="<c:out value='${selectedFilters[filter.key]}'/>" placeholder="Filter by ${filter.label.toLowerCase()}"></label></c:forEach>
         <label>Status<select name="status"><option value="">All statuses</option><c:forEach items="${statuses}" var="value"><option value="${value}" ${value == selectedStatus ? 'selected' : ''}>${value}</option></c:forEach></select></label>
         <label>Rows<select name="size"><option value="10" ${pageSize == 10 ? 'selected' : ''}>10</option><option value="25" ${pageSize == 25 ? 'selected' : ''}>25</option><option value="50" ${pageSize == 50 ? 'selected' : ''}>50</option><option value="100" ${pageSize == 100 ? 'selected' : ''}>100</option></select></label>
         <div class="filter-actions"><button class="primary" type="submit">Apply</button><a class="button secondary" href="<c:url value='/web/${module}'/>">Reset</a></div>

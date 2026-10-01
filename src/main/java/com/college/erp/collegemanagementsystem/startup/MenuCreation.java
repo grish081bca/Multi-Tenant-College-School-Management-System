@@ -92,17 +92,45 @@ public class MenuCreation {
                 subMenu("CITIES_LIST", "List Cities", "/web/cities", "CITY", 91),
                 subMenu("CITIES_ADD", "Add City", "/web/cities/add", "CITY", 91),
 
-                superMenu("ACADEMICS", "Academics", null, "fa-solid fa-graduation-cap", 100),
-                subMenu("DEPARTMENTS_LIST", "Departments", "/web/departments", "ACADEMICS", 101),
-                subMenu("FACULTIES_LIST", "Faculties", "/web/faculties", "ACADEMICS", 102),
-                subMenu("PROGRAMS_LIST", "Programs", "/web/programs", "ACADEMICS", 103),
-                subMenu("ACADEMIC_YEARS_LIST", "Academic Years", "/web/academic-years", "ACADEMICS", 104),
-                subMenu("SEMESTERS_LIST", "Semesters", "/web/semesters", "ACADEMICS", 105),
-                subMenu("SECTIONS_LIST", "Sections", "/web/sections", "ACADEMICS", 106),
-                subMenu("SUBJECTS_LIST", "Subjects", "/web/subjects", "ACADEMICS", 107),
-                subMenu("PROGRAM_SUBJECTS_LIST", "Program Subjects", "/web/program-subjects", "ACADEMICS", 108),
-                subMenu("STUDENTS_LIST", "Students", "/web/students", "ACADEMICS", 109),
-                subMenu("STUDENT_ENROLLMENTS_LIST", "Student Enrollments", "/web/student-enrollments", "ACADEMICS", 110)
+                superMenu("DEPARTMENT", "Department", null, "fa-solid fa-building-columns", 100),
+                subMenu("DEPARTMENTS_ADD", "Add Department", "/web/departments/add", "DEPARTMENT", 101),
+                subMenu("DEPARTMENTS_LIST", "List Department", "/web/departments", "DEPARTMENT", 102),
+
+                superMenu("FACULTY", "Faculty", null, "fa-solid fa-user-group", 103),
+                subMenu("FACULTIES_ADD", "Add Faculty", "/web/faculties/add", "FACULTY", 104),
+                subMenu("FACULTIES_LIST", "List Faculties", "/web/faculties", "FACULTY", 105),
+
+                superMenu("PROGRAM", "Program", null, "fa-solid fa-graduation-cap", 106),
+                subMenu("PROGRAMS_ADD", "Add Program", "/web/programs/add", "PROGRAM", 107),
+                subMenu("PROGRAMS_LIST", "List Programs", "/web/programs", "PROGRAM", 108),
+
+                superMenu("ACADEMIC_YEAR", "Academic Year", null, "fa-solid fa-calendar-days", 109),
+                subMenu("ACADEMIC_YEARS_ADD", "Add Academic Year", "/web/academic-years/add", "ACADEMIC_YEAR", 110),
+                subMenu("ACADEMIC_YEARS_LIST", "List Academic Years", "/web/academic-years", "ACADEMIC_YEAR", 111),
+
+                superMenu("SEMESTER", "Semester", null, "fa-solid fa-calendar-week", 112),
+                subMenu("SEMESTERS_ADD", "Add Semester", "/web/semesters/add", "SEMESTER", 113),
+                subMenu("SEMESTERS_LIST", "List Semesters", "/web/semesters", "SEMESTER", 114),
+
+                superMenu("SECTION", "Section", null, "fa-solid fa-people-group", 115),
+                subMenu("SECTIONS_ADD", "Add Section", "/web/sections/add", "SECTION", 116),
+                subMenu("SECTIONS_LIST", "List Sections", "/web/sections", "SECTION", 117),
+
+                superMenu("SUBJECT", "Subject", null, "fa-solid fa-book-open", 118),
+                subMenu("SUBJECTS_ADD", "Add Subject", "/web/subjects/add", "SUBJECT", 119),
+                subMenu("SUBJECTS_LIST", "List Subjects", "/web/subjects", "SUBJECT", 120),
+
+                superMenu("PROGRAM_SUBJECT", "Program Subject", null, "fa-solid fa-book", 121),
+                subMenu("PROGRAM_SUBJECTS_ADD", "Add Program Subject", "/web/program-subjects/add", "PROGRAM_SUBJECT", 122),
+                subMenu("PROGRAM_SUBJECTS_LIST", "List Program Subjects", "/web/program-subjects", "PROGRAM_SUBJECT", 123),
+
+                superMenu("STUDENT", "Student", null, "fa-solid fa-user-graduate", 124),
+                subMenu("STUDENTS_ADD", "Add Student", "/web/students/add", "STUDENT", 125),
+                subMenu("STUDENTS_LIST", "List Students", "/web/students", "STUDENT", 126),
+
+                superMenu("STUDENT_ENROLLMENT", "Student Enrollment", null, "fa-solid fa-clipboard-list", 127),
+                subMenu("STUDENT_ENROLLMENTS_ADD", "Add Student Enrollment", "/web/student-enrollments/add", "STUDENT_ENROLLMENT", 128),
+                subMenu("STUDENT_ENROLLMENTS_LIST", "List Student Enrollments", "/web/student-enrollments", "STUDENT_ENROLLMENT", 129)
         );
 
         for (MenuSeed seed : menuSeeds) {
@@ -125,7 +153,12 @@ public class MenuCreation {
 
     private void createMenuTemplates(Map<String, Menu> menus) {
         List<String> allMenus = new ArrayList<>(menus.keySet());
-        List<String> academicMenuCodes = List.of("ACADEMICS", "DEPARTMENTS_LIST", "FACULTIES_LIST", "PROGRAMS_LIST", "ACADEMIC_YEARS_LIST", "SEMESTERS_LIST", "SECTIONS_LIST", "SUBJECTS_LIST", "PROGRAM_SUBJECTS_LIST", "STUDENTS_LIST", "STUDENT_ENROLLMENTS_LIST");
+        List<String> academicMenuCodes = List.of(
+                "DEPARTMENT", "DEPARTMENTS_ADD", "DEPARTMENTS_LIST", "FACULTY", "FACULTIES_ADD", "FACULTIES_LIST",
+                "PROGRAM", "PROGRAMS_ADD", "PROGRAMS_LIST", "ACADEMIC_YEAR", "ACADEMIC_YEARS_ADD", "ACADEMIC_YEARS_LIST",
+                "SEMESTER", "SEMESTERS_ADD", "SEMESTERS_LIST", "SECTION", "SECTIONS_ADD", "SECTIONS_LIST",
+                "SUBJECT", "SUBJECTS_ADD", "SUBJECTS_LIST", "PROGRAM_SUBJECT", "PROGRAM_SUBJECTS_ADD", "PROGRAM_SUBJECTS_LIST",
+                "STUDENT", "STUDENTS_ADD", "STUDENTS_LIST", "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_ADD", "STUDENT_ENROLLMENTS_LIST");
         List<String> academics = academicMenuCodes;
         List<String> collegeAdminMenus = new ArrayList<>(List.of("DASHBOARD"));
         collegeAdminMenus.addAll(academics);
