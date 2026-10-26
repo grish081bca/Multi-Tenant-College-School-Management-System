@@ -10,7 +10,7 @@
         <div class="dashboard-hero-foot"><span class="live-dot"></span> Current overview <span class="hero-divider">/</span> <c:out value="${dashboard.roleLabel}"/></div>
     </div>
 
-    <section class="dashboard-metrics" aria-label="Key metrics">
+    <section class="dashboard-metrics ${dashboard.cardLayout}" aria-label="Key metrics">
         <c:forEach items="${dashboard.cards}" var="card">
             <c:choose>
                 <c:when test="${not empty card.href}"><a class="metric-card ${card.tone}" href="<c:url value='${card.href}'/>"></c:when>

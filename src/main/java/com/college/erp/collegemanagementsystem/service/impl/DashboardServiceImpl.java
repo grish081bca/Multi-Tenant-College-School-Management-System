@@ -2,6 +2,7 @@ package com.college.erp.collegemanagementsystem.service.impl;
 
 import com.college.erp.collegemanagementsystem.dto.DashboardDTO;
 import com.college.erp.collegemanagementsystem.entity.*;
+import com.college.erp.collegemanagementsystem.enums.TenantType;
 import com.college.erp.collegemanagementsystem.enums.UserType;
 import com.college.erp.collegemanagementsystem.service.DashboardService;
 import jakarta.persistence.EntityManager;
@@ -37,6 +38,7 @@ public class DashboardServiceImpl implements DashboardService {
         dashboard.setRoleLabel(roleLabel(role));
         dashboard.setDescription(description(role));
         dashboard.setCards(cards(role, counts));
+        dashboard.setCardLayout(dashboard.getCards().size() == 6 ? "cards-6" : "cards-4");
         dashboard.setBarItems(chartItems(dashboard.getCards()));
         if (missingTenantScope) {
             dashboard.setPieItems(List.of(new DashboardDTO.DashboardChartItemDTO("No enrollments yet", 0, "#e2e8f0", 100, null)));
@@ -50,7 +52,8 @@ public class DashboardServiceImpl implements DashboardService {
 
     private Map<String, Long> loadCounts(Long tenantId) {
         Map<String, Long> counts = new LinkedHashMap<>();
-        counts.put("tenants", count(Tenant.class, tenantId));
+        counts.put("colleges", countTenantsByType(TenantType.HEAD));
+        counts.put("branches", countTenantsByType(TenantType.BRANCH));
         counts.put("users", count(User.class, tenantId));
         counts.put("students", count(Student.class, tenantId));
         counts.put("enrollments", count(StudentEnrollment.class, tenantId));
@@ -67,9 +70,18 @@ public class DashboardServiceImpl implements DashboardService {
         return counts;
     }
 
+    private long countTenantsByType(TenantType tenantType) {
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Long> query = builder.createQuery(Long.class);
+        Root<Tenant> root = query.from(Tenant.class);
+        query.select(builder.count(root));
+        query.where(builder.equal(root.get("tenantType"), tenantType));
+        return entityManager.createQuery(query).getSingleResult();
+    }
+
     private Map<String, Long> emptyCounts() {
         Map<String, Long> counts = new LinkedHashMap<>();
-        for (String key : List.of("tenants", "users", "students", "enrollments", "programs", "subjects", "sections",
+        for (String key : List.of("colleges", "branches", "users", "students", "enrollments", "programs", "subjects", "sections",
                 "faculties", "departments", "academicYears", "semesters", "countries", "states", "cities")) {
             counts.put(key, 0L);
         }
@@ -94,7 +106,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     private List<DashboardDTO.DashboardCardDTO> cards(UserType role, Map<String, Long> counts) {
         List<String> keys = switch (role) {
-            case SUPER_ADMIN, SYSTEM_ADMIN -> List.of("tenants", "users", "students", "enrollments");
+            case SUPER_ADMIN, SYSTEM_ADMIN -> List.of("colleges", "branches", "users", "students", "enrollments", "programs");
             case COLLEGE_ADMIN -> List.of("students", "users", "programs", "enrollments");
             case COLLEGE_BRANCH -> List.of("students", "sections", "users", "enrollments");
             case PRINCIPAL -> List.of("students", "enrollments", "programs", "sections");
@@ -116,7 +128,8 @@ public class DashboardServiceImpl implements DashboardService {
 
     private CardDefinition cardDefinition(String key) {
         return switch (key) {
-            case "tenants" -> new CardDefinition("Colleges", "fa-solid fa-building", "/web/tenants", "Across your platform");
+            case "colleges" -> new CardDefinition("Colleges", "fa-solid fa-building", "/web/tenants", "Head colleges on your platform");
+            case "branches" -> new CardDefinition("College branches", "fa-solid fa-code-branch", "/web/tenant-branches", "Branches across your platform");
             case "users" -> new CardDefinition("Team members", "fa-solid fa-users", "/web/users", "Accounts in your scope");
             case "students" -> new CardDefinition("Students", "fa-solid fa-user-graduate", "/web/students", "Student records in scope");
             case "enrollments" -> new CardDefinition("Enrollments", "fa-solid fa-clipboard-check", "/web/student-enrollments", "Academic enrollment records");
@@ -182,7 +195,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     private List<DashboardDTO.DashboardActionDTO> actions(UserType role) {
         List<String> keys = switch (role) {
-            case SUPER_ADMIN, SYSTEM_ADMIN -> List.of("tenants", "users", "menuTemplates");
+            case SUPER_ADMIN, SYSTEM_ADMIN -> List.of("colleges", "branches", "users");
             case COLLEGE_ADMIN -> List.of("students", "enrollments", "programs");
             case COLLEGE_BRANCH -> List.of("students", "enrollments", "users");
             case PRINCIPAL -> List.of("students", "sections", "programs");
@@ -195,7 +208,8 @@ public class DashboardServiceImpl implements DashboardService {
         List<DashboardDTO.DashboardActionDTO> result = new ArrayList<>();
         for (String key : keys) {
             switch (key) {
-                case "tenants" -> result.add(new DashboardDTO.DashboardActionDTO("Manage colleges", "Review your college network", "fa-solid fa-building", "/web/tenants"));
+                case "colleges" -> result.add(new DashboardDTO.DashboardActionDTO("Colleges", "Review head colleges", "fa-solid fa-building", "/web/tenants"));
+                case "branches" -> result.add(new DashboardDTO.DashboardActionDTO("College branches", "Review branch campuses", "fa-solid fa-code-branch", "/web/tenant-branches"));
                 case "users" -> result.add(new DashboardDTO.DashboardActionDTO("Manage users", "Keep teams and access up to date", "fa-solid fa-users", "/web/users"));
                 case "menuTemplates" -> result.add(new DashboardDTO.DashboardActionDTO("Menu templates", "Manage role based navigation", "fa-solid fa-sliders", "/web/menu-templates"));
                 case "students" -> result.add(new DashboardDTO.DashboardActionDTO("Students", "Browse student records", "fa-solid fa-user-graduate", "/web/students"));

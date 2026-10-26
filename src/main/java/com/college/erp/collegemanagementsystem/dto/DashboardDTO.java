@@ -13,6 +13,7 @@ public class DashboardDTO {
     private String greeting;
     private String description;
     private String roleLabel;
+    private String cardLayout = "cards-4";
     private String pieGradient = "conic-gradient(#e2e8f0 0% 100%)";
     private long pieTotal;
     private List<DashboardCardDTO> cards = new ArrayList<>();
