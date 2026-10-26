@@ -153,32 +153,69 @@ public class MenuCreation {
 
     private void createMenuTemplates(Map<String, Menu> menus) {
         List<String> allMenus = new ArrayList<>(menus.keySet());
-        List<String> academicMenuCodes = List.of(
+        List<String> academicMenus = List.of(
                 "DEPARTMENT", "DEPARTMENTS_ADD", "DEPARTMENTS_LIST", "FACULTY", "FACULTIES_ADD", "FACULTIES_LIST",
                 "PROGRAM", "PROGRAMS_ADD", "PROGRAMS_LIST", "ACADEMIC_YEAR", "ACADEMIC_YEARS_ADD", "ACADEMIC_YEARS_LIST",
                 "SEMESTER", "SEMESTERS_ADD", "SEMESTERS_LIST", "SECTION", "SECTIONS_ADD", "SECTIONS_LIST",
                 "SUBJECT", "SUBJECTS_ADD", "SUBJECTS_LIST", "PROGRAM_SUBJECT", "PROGRAM_SUBJECTS_ADD", "PROGRAM_SUBJECTS_LIST",
                 "STUDENT", "STUDENTS_ADD", "STUDENTS_LIST", "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_ADD", "STUDENT_ENROLLMENTS_LIST");
-        List<String> academics = academicMenuCodes;
-        List<String> globalMenus = allMenus.stream().filter(code -> !academicMenuCodes.contains(code)).toList();
-        List<String> collegeAdminMenus = new ArrayList<>(List.of("DASHBOARD"));
-        collegeAdminMenus.addAll(academics);
-        List<String> systemAdminMenus = new ArrayList<>(globalMenus);
-        systemAdminMenus.addAll(academics);
-        List<String> staffMenus = List.of("DASHBOARD");
-        List<String> basicMenus = List.of("DASHBOARD");
+        List<String> collegeAdminMenus = mergeMenus(List.of("DASHBOARD"), academicMenus);
+        List<String> principalMenus = mergeMenus(List.of("DASHBOARD"), academicMenus);
+        List<String> teacherMenus = mergeMenus(List.of("DASHBOARD"), List.of(
+                "SECTION", "SECTIONS_ADD", "SECTIONS_LIST",
+                "SUBJECT", "SUBJECTS_ADD", "SUBJECTS_LIST",
+                "PROGRAM_SUBJECT", "PROGRAM_SUBJECTS_ADD", "PROGRAM_SUBJECTS_LIST",
+                "STUDENT", "STUDENTS_LIST",
+                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST"));
+        List<String> accountantMenus = mergeMenus(List.of("DASHBOARD"), List.of(
+                "ACADEMIC_YEAR", "ACADEMIC_YEARS_LIST",
+                "SEMESTER", "SEMESTERS_LIST",
+                "STUDENT", "STUDENTS_LIST",
+                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_ADD", "STUDENT_ENROLLMENTS_LIST"));
+        List<String> librarianMenus = mergeMenus(List.of("DASHBOARD"), List.of(
+                "STUDENT", "STUDENTS_LIST",
+                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST"));
+        List<String> studentMenus = mergeMenus(List.of("DASHBOARD"), List.of(
+                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST"));
+        List<String> guardianMenus = studentMenus;
+        List<String> staffMenus = mergeMenus(List.of("DASHBOARD"), List.of(
+                "STUDENT", "STUDENTS_LIST",
+                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST"));
+        List<String> branchMenus = mergeMenus(List.of("DASHBOARD"), List.of(
+                "USER", "USERS_LIST", "USERS_ADD",
+                "DEPARTMENT", "DEPARTMENTS_ADD", "DEPARTMENTS_LIST",
+                "FACULTY", "FACULTIES_ADD", "FACULTIES_LIST",
+                "PROGRAM", "PROGRAMS_ADD", "PROGRAMS_LIST",
+                "ACADEMIC_YEAR", "ACADEMIC_YEARS_ADD", "ACADEMIC_YEARS_LIST",
+                "SEMESTER", "SEMESTERS_ADD", "SEMESTERS_LIST",
+                "SECTION", "SECTIONS_ADD", "SECTIONS_LIST",
+                "SUBJECT", "SUBJECTS_ADD", "SUBJECTS_LIST",
+                "PROGRAM_SUBJECT", "PROGRAM_SUBJECTS_ADD", "PROGRAM_SUBJECTS_LIST",
+                "STUDENT", "STUDENTS_ADD", "STUDENTS_LIST",
+                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_ADD", "STUDENT_ENROLLMENTS_LIST"));
 
-        createTemplate(UserType.SUPER_ADMIN, "Super Admin Menu Template", globalMenus, menus);
-        createTemplate(UserType.SYSTEM_ADMIN, "System Admin Menu Template", systemAdminMenus, menus);
+        // The two platform administrator types need the complete menu catalog, including academics.
+        createTemplate(UserType.SUPER_ADMIN, "Super Admin Menu Template", allMenus, menus);
+        createTemplate(UserType.SYSTEM_ADMIN, "System Admin Menu Template", allMenus, menus);
         createTemplate(UserType.COLLEGE_ADMIN, "College Admin Menu Template", collegeAdminMenus, menus);
-        createTemplate(UserType.COLLEGE_BRANCH, "College Branch Menu Template", staffMenus, menus);
-        createTemplate(UserType.PRINCIPAL, "Principal Menu Template", staffMenus, menus);
-        createTemplate(UserType.TEACHER, "Teacher Menu Template", basicMenus, menus);
-        createTemplate(UserType.ACCOUNTANT, "Accountant Menu Template", basicMenus, menus);
-        createTemplate(UserType.LIBRARIAN, "Librarian Menu Template", basicMenus, menus);
-        createTemplate(UserType.STUDENT, "Student Menu Template", basicMenus, menus);
-        createTemplate(UserType.GUARDIAN, "Guardian Menu Template", basicMenus, menus);
+        createTemplate(UserType.COLLEGE_BRANCH, "College Branch Menu Template", branchMenus, menus);
+        createTemplate(UserType.PRINCIPAL, "Principal Menu Template", principalMenus, menus);
+        createTemplate(UserType.TEACHER, "Teacher Menu Template", teacherMenus, menus);
+        createTemplate(UserType.ACCOUNTANT, "Accountant Menu Template", accountantMenus, menus);
+        createTemplate(UserType.LIBRARIAN, "Librarian Menu Template", librarianMenus, menus);
+        createTemplate(UserType.STUDENT, "Student Menu Template", studentMenus, menus);
+        createTemplate(UserType.GUARDIAN, "Guardian Menu Template", guardianMenus, menus);
         createTemplate(UserType.STAFF, "Staff Menu Template", staffMenus, menus);
+    }
+
+    private List<String> mergeMenus(List<String> first, List<String> second) {
+        List<String> merged = new ArrayList<>(first);
+        for (String menuCode : second) {
+            if (!merged.contains(menuCode)) {
+                merged.add(menuCode);
+            }
+        }
+        return merged;
     }
 
     private void createTemplate(UserType userType,
