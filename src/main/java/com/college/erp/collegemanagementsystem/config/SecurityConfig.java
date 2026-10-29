@@ -1,6 +1,7 @@
 package com.college.erp.collegemanagementsystem.config;
 
 import com.college.erp.collegemanagementsystem.security.CustomUserDetailsService;
+import com.college.erp.collegemanagementsystem.security.WebLoginSuccessHandler;
 import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.*;
 import org.springframework.security.authentication.*;
@@ -36,7 +37,9 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, DaoAuthenticationProvider provider) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   DaoAuthenticationProvider provider,
+                                                   WebLoginSuccessHandler loginSuccessHandler) throws Exception {
         return http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authenticationProvider(provider)
@@ -45,7 +48,7 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                         .requestMatchers("/", "/login", "/login/**", "/error", "/css/**", "/js/**", "/api/auth/register", "/api/auth/login", "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                         .anyRequest().authenticated())
-                .formLogin(form -> form.loginPage("/login").loginProcessingUrl("/login").usernameParameter("username").defaultSuccessUrl("/web/dashboard", true).failureUrl("/login?error=true").permitAll())
+                .formLogin(form -> form.loginPage("/login").loginProcessingUrl("/login").usernameParameter("username").successHandler(loginSuccessHandler).failureUrl("/login?error=true").permitAll())
                 .logout(logout -> logout.logoutUrl("/web/logout").logoutSuccessUrl("/login?logout=true"))
                 .build();
     }
