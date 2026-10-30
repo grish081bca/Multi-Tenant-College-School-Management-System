@@ -49,6 +49,7 @@ public class MenuModelAdvice {
         model.addAttribute("currentUserInitial", initial(principal.getFullName(), principal.getUsername()));
         model.addAttribute("currentTenantCode", principal.getTenantCode());
         model.addAttribute("currentLastLoginAt", formatDateTime(principal.getLastLoginAt()));
+        model.addAttribute("currentLastLoginAtIso", formatIsoDateTime(principal.getLastLoginAt()));
         model.addAttribute("currentPasswordChangedAt", principal.getPasswordChangedAt());
         userRepository.findById(principal.getUserId()).ifPresent(user -> addFreshUserAttributes(model, user));
     }
@@ -59,11 +60,16 @@ public class MenuModelAdvice {
         model.addAttribute("currentUserFullName", fullName);
         model.addAttribute("currentUserInitial", initial(fullName, user.getUsername()));
         model.addAttribute("currentLastLoginAt", formatDateTime(user.getLastLoginAt()));
+        model.addAttribute("currentLastLoginAtIso", formatIsoDateTime(user.getLastLoginAt()));
         model.addAttribute("currentPasswordChangedAt", user.getPasswordChangedAt());
     }
 
     private String formatDateTime(OffsetDateTime dateTime) {
         return dateTime == null ? null : DATE_TIME_FORMATTER.format(dateTime);
+    }
+
+    private String formatIsoDateTime(OffsetDateTime dateTime) {
+        return dateTime == null ? null : dateTime.toInstant().toString();
     }
 
     private String buildFullName(User user) {

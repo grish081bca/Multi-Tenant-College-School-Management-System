@@ -83,7 +83,10 @@
                 </div>
                 <div>
                     <span class="meta-label">Last login</span>
-                    <strong><c:out value="${empty currentLastLoginAt ? 'Not available' : currentLastLoginAt}"/></strong>
+                    <strong><c:choose>
+                        <c:when test="${empty currentLastLoginAtIso}">Not available</c:when>
+                        <c:otherwise><time id="currentLastLoginAt" datetime="<c:out value='${currentLastLoginAtIso}'/>" data-utc="<c:out value='${currentLastLoginAtIso}'/>"><c:out value="${currentLastLoginAt}"/></time></c:otherwise>
+                    </c:choose></strong>
                 </div>
                 <div>
                     <span class="meta-label">Last password change</span>

@@ -13,6 +13,14 @@ if (dateTime) {
     setInterval(updateDateTime, 1000);
 }
 
+const lastLogin = document.getElementById('currentLastLoginAt');
+if (lastLogin?.dataset.utc) {
+    const lastLoginDate = new Date(lastLogin.dataset.utc);
+    if (!Number.isNaN(lastLoginDate.getTime())) {
+        lastLogin.textContent = lastLoginDate.toLocaleString();
+    }
+}
+
 document.querySelectorAll('.profile-trigger').forEach(trigger => {
     trigger.addEventListener('click', event => {
         event.stopPropagation();
