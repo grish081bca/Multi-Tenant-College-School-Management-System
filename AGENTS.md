@@ -43,13 +43,13 @@
 ## 5. Current Implementation Status & Roadmap
 
 ### Phase 1: Core System & Academic Foundation (Complete — implementation complete)
-* **[Implemented]( ):** Tenant Management, User Management, Menu Management, Menu Template Management, User Template Management, Country/State/City Management, Academic Foundation (Faculty, Department, Program, Academic Year, Semester, Section, Subject, Program Subject, Student Management, Student Enrollment), Role/Permission enforcement, and Audit Log search management.
+* **Implemented:** Tenant Management, User Management, Menu Management, Menu Template Management, User Template Management, Country/State/City Management, Academic Foundation (Faculty, Department, Program, Academic Year, Semester, Section, Subject, Program Subject, Student Management, Student Enrollment), Role/Permission enforcement, and Audit Log search management.
 * **Role and Permission Management:** `RolePermissionPolicy` maps authenticated user types to explicit Spring Security permission authorities. `SecurityConfig` applies permission checks to system administration and academic routes, while academic write handlers enforce write permission at method level.
 * **Audit Log Management:** System administrators can search paginated `EntityChangeLog` records through `/api/v1/audit-logs` and `/web/audit-logs`, filtering by text, entity, entity ID, action, actor, and date range.
 
-### Phase 2: Essential College Operations (Pending)
-1. Student Admission Management
-2. Teacher and Staff Management
+### Phase 2: Essential College Operations (In progress)
+1. Student Admission Management (Complete)
+2. Teacher and Staff Management (Complete)
 3. Student Attendance
 4. Timetable Management
 5. Examination Management
@@ -61,6 +61,10 @@
 11. Receipt Generation
 12. Notice and Notification Management
 13. Student Portal & Teacher Portal
+
+* **Student Admission Management:** Tenant-scoped application records and review transitions; accepting an application atomically creates the existing student and student-enrollment records. Applicant and decision changes are audited.
+* **Teacher and Staff Management:** Tenant-scoped employee profiles for teachers and staff, with department validation, status handling, soft deletion, and audit history. This manages employee profiles; login account provisioning remains part of User Management.
+* **Verification status:** `mvnw.cmd -q -DskipTests compile` completed successfully after these Phase 2 changes. API runtime behavior and authenticated Postman requests have not been exercised.
 
 ### Phase 3: Advanced Academic & Administrative Features (Pending)
 1. Library Management
