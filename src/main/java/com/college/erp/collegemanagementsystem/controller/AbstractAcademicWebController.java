@@ -9,6 +9,7 @@ import com.college.erp.collegemanagementsystem.service.TenantService;
 import com.college.erp.collegemanagementsystem.exception.ValidationException;
 import com.college.erp.collegemanagementsystem.security.AuthenticatedUserPrincipal;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -48,6 +49,7 @@ public abstract class AbstractAcademicWebController {
         model.addAttribute("module", module()); model.addAttribute("moduleTitle", title());
         model.addAttribute("q", q); model.addAttribute("selectedStatus", status); model.addAttribute("statuses", Status.values());
         model.addAttribute("systemAdmin", isSystemAdmin()); model.addAttribute("selectedTenantId", tenantId);
+        model.addAttribute("canManageAcademic", canManageAcademic());
         if (isSystemAdmin()) model.addAttribute("tenants", tenants.getAllTenants());
         model.addAttribute("academicFilters", filterFields()); model.addAttribute("selectedFilters", filters);
         Map<String, Object> retained = new LinkedHashMap<>(); retained.put("q", q); retained.putAll(filters); retained.put("status", status); retained.put("tenantId", tenantId);
@@ -56,9 +58,11 @@ public abstract class AbstractAcademicWebController {
     }
 
     @GetMapping("/add")
+    @PreAuthorize("hasAuthority('PERMISSION_ACADEMIC_WRITE')")
     public String addForm(@RequestParam(required = false) Long tenantId, Model model) { prepareForm(new AcademicRecordDTO(), tenantId, model); model.addAttribute("isEdit", false); return viewPrefix() + "-form"; }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PERMISSION_ACADEMIC_WRITE')")
     public String create(@ModelAttribute("record") AcademicRecordDTO form, @RequestParam(required = false) Long tenantId, BindingResult binding, RedirectAttributes flash) {
         if (binding.hasErrors()) { flash.addFlashAttribute("error", bindingMessage(binding)); flash.addFlashAttribute("academicForm", form); return redirectAdd(tenantId); }
         try { service.save(null, form, null, tenantId); flash.addFlashAttribute("success", title() + " created successfully."); }
@@ -67,12 +71,14 @@ public abstract class AbstractAcademicWebController {
     }
 
     @GetMapping("/{id}/edit")
+    @PreAuthorize("hasAuthority('PERMISSION_ACADEMIC_WRITE')")
     public String editForm(@PathVariable Long id, @RequestParam(required = false) Long tenantId, Model model, RedirectAttributes flash) {
         try { prepareForm(service.get(id, tenantId), tenantId, model); model.addAttribute("isEdit", true); return viewPrefix() + "-form"; }
         catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); return redirectList(tenantId); }
     }
 
     @PostMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERMISSION_ACADEMIC_WRITE')")
     public String update(@PathVariable Long id, @ModelAttribute("record") AcademicRecordDTO form, BindingResult binding,
                          @RequestParam(required = false) String remarks, @RequestParam(required = false) Long tenantId, RedirectAttributes flash) {
         if (binding.hasErrors()) { flash.addFlashAttribute("error", bindingMessage(binding)); flash.addFlashAttribute("academicForm", form); return redirectEdit(id, tenantId); }
@@ -85,11 +91,13 @@ public abstract class AbstractAcademicWebController {
     public String view(@PathVariable Long id, @RequestParam(required = false) Long tenantId, Model model, RedirectAttributes flash) {
         try {
             AcademicRecordDTO record = service.get(id, tenantId); model.addAttribute("record", record); model.addAttribute("module", module()); model.addAttribute("moduleTitle", title()); model.addAttribute("selectedTenantId", record.getTenantId()); model.addAttribute("systemAdmin", isSystemAdmin());
+            model.addAttribute("canManageAcademic", canManageAcademic());
             model.addAttribute("changeLogs", changeLogs.getRecentChanges(entityName(), id)); return viewPrefix() + "-detail";
         } catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); return redirectList(tenantId); }
     }
 
     @PostMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('PERMISSION_ACADEMIC_WRITE')")
     public String status(@PathVariable Long id, @RequestParam Status status, @RequestParam(required = false) String remarks, @RequestParam(required = false) Long tenantId, RedirectAttributes flash) {
         try { service.changeStatus(id, status, remarks, tenantId); flash.addFlashAttribute("success", title() + " status updated successfully."); }
         catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); }
@@ -97,6 +105,7 @@ public abstract class AbstractAcademicWebController {
     }
 
     @PostMapping("/{id}/delete")
+    @PreAuthorize("hasAuthority('PERMISSION_ACADEMIC_WRITE')")
     public String delete(@PathVariable Long id, @RequestParam(required = false) Long tenantId, RedirectAttributes flash) {
         try { service.delete(id, tenantId); flash.addFlashAttribute("success", title() + " deleted successfully."); }
         catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); }
@@ -151,6 +160,11 @@ public abstract class AbstractAcademicWebController {
     private boolean isSystemAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null && auth.getPrincipal() instanceof AuthenticatedUserPrincipal principal && principal.getUserType() == com.college.erp.collegemanagementsystem.enums.UserType.SYSTEM_ADMIN;
+    }
+    private boolean canManageAcademic() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(authority -> "PERMISSION_ACADEMIC_WRITE".equals(authority.getAuthority()));
     }
     private String redirectAdd(Long tenantId) { return "redirect:" + base() + "/add" + (tenantId == null ? "" : "?tenantId=" + tenantId); }
     private String redirectEdit(Long id, Long tenantId) { return "redirect:" + base() + "/" + id + "/edit" + (tenantId == null ? "" : "?tenantId=" + tenantId); }

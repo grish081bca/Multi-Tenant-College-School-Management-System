@@ -3,7 +3,7 @@
 <section class="page-heading">
     <div><p class="eyebrow">Academic administration</p><h1>${moduleTitle}</h1><p class="muted"><c:choose><c:when test="${systemAdmin}">Manage ${moduleTitle.toLowerCase()} records across tenants or filter by tenant.</c:when><c:otherwise>Manage ${moduleTitle.toLowerCase()} records for your college.</c:otherwise></c:choose></p></div>
     <c:url var="addAcademicUrl" value="/web/${module}/add"><c:if test="${systemAdmin and not empty selectedTenantId}"><c:param name="tenantId" value="${selectedTenantId}"/></c:if></c:url>
-    <a class="button primary" href="${addAcademicUrl}"><i class="fa-solid fa-plus"></i> Add ${moduleTitle}</a>
+    <c:if test="${canManageAcademic}"><a class="button primary" href="${addAcademicUrl}"><i class="fa-solid fa-plus"></i> Add ${moduleTitle}</a></c:if>
 </section>
 <section class="filter-panel">
     <form class="filter-grid" action="<c:url value='/web/${module}'/>" method="get">
@@ -37,13 +37,13 @@
             <c:otherwise><c:out value="${record.description}"/></c:otherwise>
         </c:choose></td>
         <td><span class="status-pill status-${record.status}"><c:out value="${record.status}"/></span></td>
-        <td class="actions-cell"><a class="action-button secondary" href="${recordViewUrl}"><i class="fa-solid fa-eye"></i><span>View</span></a><a class="action-button secondary" href="${recordEditUrl}"><i class="fa-solid fa-pen-to-square"></i><span>Edit</span></a>
+        <td class="actions-cell"><a class="action-button secondary" href="${recordViewUrl}"><i class="fa-solid fa-eye"></i><span>View</span></a><c:if test="${canManageAcademic}"><a class="action-button secondary" href="${recordEditUrl}"><i class="fa-solid fa-pen-to-square"></i><span>Edit</span></a>
             <button class="action-button secondary academic-status-trigger" type="button" data-action="${recordStatusUrl}" data-status="${record.status}" data-name="<c:out value='${record.name}'/>"><i class="fa-solid fa-toggle-on" aria-hidden="true"></i><span>Change status</span></button>
             <form class="action-form" method="post" action="${recordDeleteUrl}"><button class="action-button secondary" type="submit" onclick="return confirm('Delete this ${moduleTitle.toLowerCase()} record?')"><i class="fa-solid fa-trash"></i><span>Delete</span></button></form>
-        </td>
+        </c:if></td>
     </tr></c:forEach></tbody>
 </table></div><%@ include file="fragments/data-table-empty.jspf" %><%@ include file="fragments/pagination.jspf" %></section>
-<dialog class="status-dialog" id="academicStatusDialog"><form id="academicStatusForm" method="post">
+<c:if test="${canManageAcademic}"><dialog class="status-dialog" id="academicStatusDialog"><form id="academicStatusForm" method="post">
     <div class="dialog-header"><h2>Change ${moduleTitle.toLowerCase()} status</h2><button class="icon-button academic-dialog-close" type="button" aria-label="Close dialog"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
     <p class="muted" id="academicStatusName"></p>
     <label>Status<select name="status" id="academicStatusSelect" required><c:forEach items="${statuses}" var="value"><option value="${value}">${value}</option></c:forEach></select></label>
@@ -67,4 +67,5 @@
         document.querySelectorAll('.academic-dialog-close').forEach(function (button) { button.addEventListener('click', function () { dialog.close(); }); });
     });
 </script>
+</c:if>
 <%@ include file="fragments/footer.jspf" %>

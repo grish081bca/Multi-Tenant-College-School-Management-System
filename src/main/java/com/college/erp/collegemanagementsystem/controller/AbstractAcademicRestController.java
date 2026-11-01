@@ -5,6 +5,7 @@ import com.college.erp.collegemanagementsystem.dto.RestResponseDTO;
 import com.college.erp.collegemanagementsystem.enums.Status;
 import com.college.erp.collegemanagementsystem.exception.ValidationException;
 import com.college.erp.collegemanagementsystem.service.AcademicModuleService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +19,12 @@ public abstract class AbstractAcademicRestController {
     protected AbstractAcademicRestController(AcademicModuleService service) { this.service = service; }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PERMISSION_ACADEMIC_WRITE')")
     public ResponseEntity<RestResponseDTO> create(@RequestBody AcademicRecordDTO request, @RequestParam(required = false) Long tenantId) {
         return ResponseEntity.status(HttpStatus.CREATED).body(RestResponseDTO.success("Record created successfully.", service.save(null, request, null, tenantId)));
     }
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERMISSION_ACADEMIC_WRITE')")
     public ResponseEntity<RestResponseDTO> update(@PathVariable Long id, @RequestBody AcademicRecordDTO request, @RequestParam(required = false) String remarks, @RequestParam(required = false) Long tenantId) {
         return ResponseEntity.ok(RestResponseDTO.success("Record updated successfully.", service.save(id, request, remarks, tenantId)));
     }
@@ -38,10 +41,12 @@ public abstract class AbstractAcademicRestController {
     @GetMapping("/{id}")
     public ResponseEntity<RestResponseDTO> get(@PathVariable Long id, @RequestParam(required = false) Long tenantId) { return ResponseEntity.ok(RestResponseDTO.success("Record found successfully.", service.get(id, tenantId))); }
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('PERMISSION_ACADEMIC_WRITE')")
     public ResponseEntity<RestResponseDTO> status(@PathVariable Long id, @RequestParam Status status, @RequestParam(required = false) String remarks, @RequestParam(required = false) Long tenantId) {
         service.changeStatus(id, status, remarks, tenantId); return ResponseEntity.ok(RestResponseDTO.success("Record status updated successfully."));
     }
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERMISSION_ACADEMIC_WRITE')")
     public ResponseEntity<RestResponseDTO> delete(@PathVariable Long id, @RequestParam(required = false) Long tenantId) {
         service.delete(id, tenantId); return ResponseEntity.ok(RestResponseDTO.success("Record deleted successfully."));
     }
