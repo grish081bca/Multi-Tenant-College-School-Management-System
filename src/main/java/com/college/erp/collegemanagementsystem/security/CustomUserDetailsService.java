@@ -49,6 +49,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         if (user.getUserType() != null) {
             authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getUserType().name()));
             authorities.add(new SimpleGrantedAuthority("USER_TYPE_" + user.getUserType().name()));
+            authorities.addAll(RolePermissionPolicy.authoritiesFor(user.getUserType()));
         }
 
         return AuthenticatedUserPrincipal.fromUser(user, authorities);
