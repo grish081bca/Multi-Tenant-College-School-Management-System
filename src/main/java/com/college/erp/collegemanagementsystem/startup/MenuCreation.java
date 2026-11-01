@@ -92,6 +92,9 @@ public class MenuCreation {
                 subMenu("CITIES_LIST", "List Cities", "/web/cities", "CITY", 91),
                 subMenu("CITIES_ADD", "Add City", "/web/cities/add", "CITY", 91),
 
+                superMenu("AUDIT_LOG", "Audit Logs", null, "fa-solid fa-clock-rotate-left", 95),
+                subMenu("AUDIT_LOGS_LIST", "View Audit Logs", "/web/audit-logs", "AUDIT_LOG", 96),
+
                 superMenu("DEPARTMENT", "Department", null, "fa-solid fa-building-columns", 100),
                 subMenu("DEPARTMENTS_ADD", "Add Department", "/web/departments/add", "DEPARTMENT", 101),
                 subMenu("DEPARTMENTS_LIST", "List Department", "/web/departments", "DEPARTMENT", 102),
@@ -162,27 +165,25 @@ public class MenuCreation {
         List<String> collegeAdminMenus = mergeMenus(List.of("DASHBOARD"), academicMenus);
         List<String> principalMenus = mergeMenus(List.of("DASHBOARD"), academicMenus);
         List<String> teacherMenus = mergeMenus(List.of("DASHBOARD"), List.of(
-                "SECTION", "SECTIONS_ADD", "SECTIONS_LIST",
-                "SUBJECT", "SUBJECTS_ADD", "SUBJECTS_LIST",
-                "PROGRAM_SUBJECT", "PROGRAM_SUBJECTS_ADD", "PROGRAM_SUBJECTS_LIST",
+                "SECTION", "SECTIONS_LIST",
+                "SUBJECT", "SUBJECTS_LIST",
+                "PROGRAM_SUBJECT", "PROGRAM_SUBJECTS_LIST",
                 "STUDENT", "STUDENTS_LIST",
                 "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST"));
         List<String> accountantMenus = mergeMenus(List.of("DASHBOARD"), List.of(
                 "ACADEMIC_YEAR", "ACADEMIC_YEARS_LIST",
                 "SEMESTER", "SEMESTERS_LIST",
                 "STUDENT", "STUDENTS_LIST",
-                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_ADD", "STUDENT_ENROLLMENTS_LIST"));
+                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST"));
         List<String> librarianMenus = mergeMenus(List.of("DASHBOARD"), List.of(
                 "STUDENT", "STUDENTS_LIST",
                 "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST"));
-        List<String> studentMenus = mergeMenus(List.of("DASHBOARD"), List.of(
-                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST"));
+        List<String> studentMenus = List.of("DASHBOARD");
         List<String> guardianMenus = studentMenus;
         List<String> staffMenus = mergeMenus(List.of("DASHBOARD"), List.of(
                 "STUDENT", "STUDENTS_LIST",
                 "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST"));
         List<String> branchMenus = mergeMenus(List.of("DASHBOARD"), List.of(
-                "USER", "USERS_LIST", "USERS_ADD",
                 "DEPARTMENT", "DEPARTMENTS_ADD", "DEPARTMENTS_LIST",
                 "FACULTY", "FACULTIES_ADD", "FACULTIES_LIST",
                 "PROGRAM", "PROGRAMS_ADD", "PROGRAMS_LIST",
