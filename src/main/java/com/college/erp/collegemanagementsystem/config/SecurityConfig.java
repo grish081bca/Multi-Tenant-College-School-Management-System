@@ -49,6 +49,8 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                         .requestMatchers("/", "/login", "/login/**", "/error", "/css/**", "/js/**", "/api/auth/register", "/api/auth/login", "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                         .requestMatchers("/api/v1/audit-logs/**", "/web/audit-logs/**").hasAuthority("PERMISSION_AUDIT_LOG_READ")
+                        .requestMatchers("/api/v1/admissions/**", "/web/admissions/**").hasAuthority("PERMISSION_ADMISSION_READ")
+                        .requestMatchers("/api/v1/employees/**", "/web/employees/**").hasAuthority("PERMISSION_EMPLOYEE_READ")
                         .requestMatchers("/api/v1/tenants/**", "/web/tenants/**", "/web/tenant-branches/**",
                                 "/api/v1/users/**", "/web/users/**", "/api/v1/user-templates/**", "/web/user-templates/**",
                                 "/api/v1/menus/**", "/web/menus/**", "/api/v1/menu-templates/**", "/web/menu-templates/**",

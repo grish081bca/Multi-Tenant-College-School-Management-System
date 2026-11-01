@@ -13,7 +13,8 @@ import java.util.stream.Collectors;
 public final class RolePermissionPolicy {
     private static final Map<UserType, Set<Permission>> PERMISSIONS = buildPermissions();
 
-    private RolePermissionPolicy() { }
+    private RolePermissionPolicy() {
+    }
 
     public static Set<SimpleGrantedAuthority> authoritiesFor(UserType userType) {
         if (userType == null) return Set.of();
@@ -28,16 +29,17 @@ public final class RolePermissionPolicy {
         permissions.put(UserType.SYSTEM_ADMIN, platformAdmin);
         permissions.put(UserType.SUPER_ADMIN, platformAdmin);
 
-        Set<Permission> collegeManagers = EnumSet.of(Permission.ACADEMIC_READ, Permission.ACADEMIC_WRITE);
+        Set<Permission> collegeManagers = EnumSet.of(Permission.ACADEMIC_READ, Permission.ACADEMIC_WRITE,
+                Permission.ADMISSION_READ, Permission.ADMISSION_WRITE, Permission.EMPLOYEE_READ, Permission.EMPLOYEE_WRITE);
         permissions.put(UserType.COLLEGE_ADMIN, collegeManagers);
         permissions.put(UserType.COLLEGE_BRANCH, collegeManagers);
         permissions.put(UserType.PRINCIPAL, collegeManagers);
 
         Set<Permission> academicReaders = EnumSet.of(Permission.ACADEMIC_READ);
-        permissions.put(UserType.TEACHER, academicReaders);
+        permissions.put(UserType.TEACHER, EnumSet.of(Permission.ACADEMIC_READ, Permission.EMPLOYEE_READ));
         permissions.put(UserType.ACCOUNTANT, academicReaders);
         permissions.put(UserType.LIBRARIAN, academicReaders);
-        permissions.put(UserType.STAFF, academicReaders);
+        permissions.put(UserType.STAFF, EnumSet.of(Permission.ACADEMIC_READ, Permission.EMPLOYEE_READ, Permission.ADMISSION_READ));
         return Map.copyOf(permissions);
     }
 }
