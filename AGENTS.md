@@ -36,6 +36,7 @@
 - **DTOs & Validation:** Use request DTOs and bean validation for inputs. Keep persistence entities out of API request/response contracts unless an established endpoint already does so.
 - **Entity Integrity:** Preserve existing status, soft-delete, duplicate-check, relationship-validation, and entity change-log behaviors when modifying records.
 - **Security & Permissions:** Menu templates organize menus by user type, but menu visibility alone does not enforce endpoint authorization. Apply and verify explicit server-side access checks for protected operations.
+- **Data Formats:** Display date-time values consistently as `yyyy-MM-dd HH:mm` and date-only values as `yyyy-MM-dd`. Keep stored timestamps and machine-readable ISO values unchanged; use lowercase `yyyy` for calendar-year formatting.
 - **Avoid Unrelated Refactors:** Keep changes scoped to the task at hand and preserve existing user changes in the working tree.
 
 ---
