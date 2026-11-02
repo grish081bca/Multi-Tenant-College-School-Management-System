@@ -1,6 +1,8 @@
 package com.college.erp.collegemanagementsystem.entity;
 
 import com.college.erp.collegemanagementsystem.enums.EntityChangeAction;
+import com.college.erp.collegemanagementsystem.util.DateFormatUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -46,4 +49,10 @@ public class EntityChangeLog extends AuditableEntity {
     private String newValue;
     @Column(name = "remarks", columnDefinition = "TEXT")
     private String remarks;
+
+    @Transient
+    @JsonIgnore
+    public String getCreatedAtDisplay() {
+        return DateFormatUtils.formatDateTime(getCreatedAt());
+    }
 }

@@ -1,10 +1,10 @@
 package com.college.erp.collegemanagementsystem.mapper.impl;
 
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import com.college.erp.collegemanagementsystem.dto.TenantDTO;
 import com.college.erp.collegemanagementsystem.util.ConvertUtils;
+import com.college.erp.collegemanagementsystem.util.DateFormatUtils;
 import org.springframework.stereotype.Component;
 import com.college.erp.collegemanagementsystem.entity.Tenant;
 import com.college.erp.collegemanagementsystem.dto.request.TenantCreateRequest;
@@ -23,8 +23,6 @@ import com.college.erp.collegemanagementsystem.mapper.TenantMapper;
  */
 @Component
 public class TenantMapperImpl implements TenantMapper {
-    private static final DateTimeFormatter DISPLAY_DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
     private final LocationValidationService locationValidationService;
 
     public TenantMapperImpl(LocationValidationService locationValidationService) {
@@ -57,10 +55,10 @@ public class TenantMapperImpl implements TenantMapper {
         TenantDTO dto = new TenantDTO();
         dto.setId(entity.getId());
         if (entity.getCreatedAt() != null) {
-            dto.setCreatedDate(entity.getCreatedAt().format(DISPLAY_DATE_TIME));
+            dto.setCreatedDate(DateFormatUtils.formatDateTime(entity.getCreatedAt()));
         }
         if (entity.getUpdatedAt() != null) {
-            dto.setUpdatedDate(entity.getUpdatedAt().format(DISPLAY_DATE_TIME));
+            dto.setUpdatedDate(DateFormatUtils.formatDateTime(entity.getUpdatedAt()));
         }
         // createdBy/updatedBy come from AuditableEntity
         if (entity.getCreatedBy() != null) {

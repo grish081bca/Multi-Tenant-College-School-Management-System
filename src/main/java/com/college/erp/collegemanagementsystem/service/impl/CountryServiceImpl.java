@@ -15,6 +15,7 @@ import com.college.erp.collegemanagementsystem.repository.StateRepository;
 import com.college.erp.collegemanagementsystem.repository.TenantRepository;
 import com.college.erp.collegemanagementsystem.service.CountryService;
 import com.college.erp.collegemanagementsystem.util.ConvertUtils;
+import com.college.erp.collegemanagementsystem.util.DateFormatUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageRequest;
@@ -146,9 +147,9 @@ public class CountryServiceImpl implements CountryService {
         }
         CountryDTO dto = new CountryDTO();
         dto.setId(country.getId());
-        dto.setCreatedDate(country.getCreatedAt().toString());
+        dto.setCreatedDate(DateFormatUtils.formatDateTime(country.getCreatedAt()));
         if (country.getUpdatedAt() != null) {
-            dto.setUpdatedDate(country.getUpdatedAt().toString());
+            dto.setUpdatedDate(DateFormatUtils.formatDateTime(country.getUpdatedAt()));
         }
         dto.setName(country.getName());
         dto.setIsoCode(country.getIsoCode());

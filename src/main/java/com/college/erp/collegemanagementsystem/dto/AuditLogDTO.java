@@ -2,6 +2,8 @@ package com.college.erp.collegemanagementsystem.dto;
 
 import com.college.erp.collegemanagementsystem.entity.EntityChangeLog;
 import com.college.erp.collegemanagementsystem.enums.EntityChangeAction;
+import com.college.erp.collegemanagementsystem.util.DateFormatUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,6 +22,11 @@ public class AuditLogDTO {
     private String remarks;
     private String createdBy;
     private OffsetDateTime createdAt;
+
+    @JsonIgnore
+    public String getCreatedAtDisplay() {
+        return DateFormatUtils.formatDateTime(createdAt);
+    }
 
     public static AuditLogDTO from(EntityChangeLog entity) {
         AuditLogDTO dto = new AuditLogDTO();

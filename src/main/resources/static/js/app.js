@@ -5,19 +5,26 @@ document.querySelectorAll('form[action*="/delete"]').forEach(form => form.addEve
 }));
 
 const dateTime = document.getElementById('currentDateTime');
+const formatDisplayDateTime = value => {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const twoDigits = part => String(part).padStart(2, '0');
+    return `${date.getFullYear()}-${twoDigits(date.getMonth() + 1)}-${twoDigits(date.getDate())} ${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`;
+};
+
 if (dateTime) {
     const updateDateTime = () => {
-        dateTime.textContent = new Date().toLocaleString();
+        dateTime.textContent = formatDisplayDateTime(new Date());
     };
     updateDateTime();
-    setInterval(updateDateTime, 1000);
+    setInterval(updateDateTime, 60000);
 }
 
 const lastLogin = document.getElementById('currentLastLoginAt');
 if (lastLogin?.dataset.utc) {
     const lastLoginDate = new Date(lastLogin.dataset.utc);
     if (!Number.isNaN(lastLoginDate.getTime())) {
-        lastLogin.textContent = lastLoginDate.toLocaleString();
+        lastLogin.textContent = formatDisplayDateTime(lastLoginDate);
     }
 }
 
@@ -49,14 +56,20 @@ document.querySelectorAll('.menu-toggle').forEach(trigger => {
 function getGroupKey(group) {
     return group.dataset.menuCode || group.dataset.menuId || null;
 }
+
 function getOpenGroups() {
     return Array.from(document.querySelectorAll('.menu-group.open'))
         .map(g => getGroupKey(g))
         .filter(Boolean);
 }
+
 function saveOpenGroups() {
-    try { localStorage.setItem('erp.openMenuGroups', JSON.stringify(getOpenGroups())); } catch(e) {}
+    try {
+        localStorage.setItem('erp.openMenuGroups', JSON.stringify(getOpenGroups()));
+    } catch (e) {
+    }
 }
+
 function restoreOpenGroups() {
     try {
         const raw = localStorage.getItem('erp.openMenuGroups');
@@ -68,7 +81,8 @@ function restoreOpenGroups() {
                 .find(gg => (gg.dataset.menuCode || gg.dataset.menuId) == code);
             if (group) group.classList.add('open');
         });
-    } catch(e) {}
+    } catch (e) {
+    }
 }
 
 function normalizePath(path) {
@@ -82,7 +96,7 @@ function findCurrentMenuLink() {
         try {
             const linkPath = normalizePath(new URL(link.href, window.location.origin).pathname);
             return linkPath === currentPath;
-        } catch(e) {
+        } catch (e) {
             return false;
         }
     });
@@ -133,7 +147,7 @@ if (appShell && sidebarToggle) {
 
 
     document.querySelectorAll('.super-menu').forEach(el => {
-        el.addEventListener('click', function(e) {
+        el.addEventListener('click', function (e) {
             if (appShell.classList.contains('sidebar-collapsed')) {
                 if (e.target && (e.target.tagName === 'A' || e.target.closest('a'))) {
                     e.preventDefault();

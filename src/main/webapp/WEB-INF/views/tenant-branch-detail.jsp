@@ -8,14 +8,18 @@
             <div class="tenant-meta">
                 <span><i class="fa-solid fa-building" aria-hidden="true"></i><c:out value="${tenant.parentTenantName}"/></span>
                 <span><i class="fa-solid fa-hashtag" aria-hidden="true"></i><c:out value="${tenant.tenantCode}"/></span>
-                <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i><c:out value="${tenant.cityName}"/><c:if test="${not empty tenant.stateName}">, <c:out value="${tenant.stateName}"/></c:if></span>
+                <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i><c:out
+                        value="${tenant.cityName}"/><c:if test="${not empty tenant.stateName}">, <c:out
+                        value="${tenant.stateName}"/></c:if></span>
             </div>
         </div>
     </div>
     <div class="tenant-hero-actions">
         <span class="status-pill status-${tenant.status}"><c:out value="${tenant.status}"/></span>
-        <a class="button secondary" href="<c:url value='/web/tenant-branches'/>"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Back</a>
-        <a class="button primary" href="<c:url value='/web/tenant-branches/${tenant.id}/edit'/>"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>Edit</a>
+        <a class="button secondary" href="<c:url value='/web/tenant-branches'/>"><i class="fa-solid fa-arrow-left"
+                                                                                    aria-hidden="true"></i>Back</a>
+        <a class="button primary" href="<c:url value='/web/tenant-branches/${tenant.id}/edit'/>"><i
+                class="fa-solid fa-pen-to-square" aria-hidden="true"></i>Edit</a>
     </div>
 </section>
 
@@ -29,11 +33,16 @@
             </div>
         </div>
         <div class="tenant-detail-list">
-            <div><span>Main tenant</span><strong><c:out value="${tenant.parentTenantName}"/> - <c:out value="${tenant.parentTenantCode}"/></strong></div>
+            <div><span>Main tenant</span><strong><c:out value="${tenant.parentTenantName}"/> - <c:out
+                    value="${tenant.parentTenantCode}"/></strong></div>
             <div><span>Email</span><strong><c:out value="${tenant.contactEmail}"/></strong></div>
-            <div><span>Secondary email</span><strong><c:out value="${empty tenant.contactEmailSecondary ? 'Not provided' : tenant.contactEmailSecondary}"/></strong></div>
+            <div><span>Secondary email</span><strong><c:out
+                    value="${empty tenant.contactEmailSecondary ? 'Not provided' : tenant.contactEmailSecondary}"/></strong>
+            </div>
             <div><span>Phone</span><strong><c:out value="${tenant.contactPhone}"/></strong></div>
-            <div><span>Secondary phone</span><strong><c:out value="${empty tenant.contactPhoneSecondary ? 'Not provided' : tenant.contactPhoneSecondary}"/></strong></div>
+            <div><span>Secondary phone</span><strong><c:out
+                    value="${empty tenant.contactPhoneSecondary ? 'Not provided' : tenant.contactPhoneSecondary}"/></strong>
+            </div>
         </div>
     </article>
 
@@ -46,8 +55,10 @@
             </div>
         </div>
         <div class="tenant-detail-list">
-            <div><span>Address line 1</span><strong><c:out value="${empty tenant.addressLine1 ? 'Not provided' : tenant.addressLine1}"/></strong></div>
-            <div><span>Address line 2</span><strong><c:out value="${empty tenant.addressLine2 ? 'Not provided' : tenant.addressLine2}"/></strong></div>
+            <div><span>Address line 1</span><strong><c:out
+                    value="${empty tenant.addressLine1 ? 'Not provided' : tenant.addressLine1}"/></strong></div>
+            <div><span>Address line 2</span><strong><c:out
+                    value="${empty tenant.addressLine2 ? 'Not provided' : tenant.addressLine2}"/></strong></div>
             <div><span>Country</span><strong><c:out value="${tenant.countryName}"/></strong></div>
             <div><span>State</span><strong><c:out value="${tenant.stateName}"/></strong></div>
             <div><span>City</span><strong><c:out value="${tenant.cityName}"/></strong></div>
@@ -80,7 +91,7 @@
             <tbody>
             <c:forEach items="${changeLogs}" var="log">
                 <tr>
-                    <td><c:out value="${log.createdAt}"/></td>
+                    <td><c:out value="${log.createdAtDisplay}"/></td>
                     <td><span class="log-action"><c:out value="${log.action}"/></span></td>
                     <td><c:out value="${empty log.fieldName ? '-' : log.fieldName}"/></td>
                     <td><c:out value="${empty log.oldValue ? '-' : log.oldValue}"/></td>

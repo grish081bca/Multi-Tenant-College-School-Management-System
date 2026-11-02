@@ -16,6 +16,7 @@ import com.college.erp.collegemanagementsystem.repository.TenantRepository;
 import com.college.erp.collegemanagementsystem.repository.CityRepository;
 import com.college.erp.collegemanagementsystem.service.StateService;
 import com.college.erp.collegemanagementsystem.util.ConvertUtils;
+import com.college.erp.collegemanagementsystem.util.DateFormatUtils;
 import com.college.erp.collegemanagementsystem.validation.LocationValidationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -158,9 +159,9 @@ public class StateServiceImpl implements StateService {
         }
         StateDTO dto = new StateDTO();
         dto.setId(state.getId());
-        dto.setCreatedDate(state.getCreatedAt().toString());
+        dto.setCreatedDate(DateFormatUtils.formatDateTime(state.getCreatedAt()));
         if (state.getUpdatedAt() != null) {
-            dto.setUpdatedDate(state.getUpdatedAt().toString());
+            dto.setUpdatedDate(DateFormatUtils.formatDateTime(state.getUpdatedAt()));
         }
         dto.setName(state.getName());
         dto.setCountryId(state.getCountry().getId());

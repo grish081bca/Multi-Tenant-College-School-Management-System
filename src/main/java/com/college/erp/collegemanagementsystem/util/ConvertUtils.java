@@ -5,9 +5,8 @@ package com.college.erp.collegemanagementsystem.util;
  *
  */
 public final class ConvertUtils {
-    private static final java.time.format.DateTimeFormatter DISPLAY_DATE_TIME = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
-    public ConvertUtils() {}
+    public ConvertUtils() {
+    }
 
     public static String normalizeText(String value) {
         if (value == null) {
@@ -33,10 +32,10 @@ public final class ConvertUtils {
         com.college.erp.collegemanagementsystem.dto.UserDTO dto = new com.college.erp.collegemanagementsystem.dto.UserDTO();
         dto.setId(user.getId());
         if (user.getCreatedAt() != null) {
-            dto.setCreatedDate(user.getCreatedAt().format(DISPLAY_DATE_TIME));
+            dto.setCreatedDate(DateFormatUtils.formatDateTime(user.getCreatedAt()));
         }
         if (user.getUpdatedAt() != null) {
-            dto.setUpdatedDate(user.getUpdatedAt().format(DISPLAY_DATE_TIME));
+            dto.setUpdatedDate(DateFormatUtils.formatDateTime(user.getUpdatedAt()));
         }
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());

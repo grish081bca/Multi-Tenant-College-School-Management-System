@@ -16,6 +16,7 @@ import com.college.erp.collegemanagementsystem.repository.StateRepository;
 import com.college.erp.collegemanagementsystem.repository.TenantRepository;
 import com.college.erp.collegemanagementsystem.service.CityService;
 import com.college.erp.collegemanagementsystem.util.ConvertUtils;
+import com.college.erp.collegemanagementsystem.util.DateFormatUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageRequest;
@@ -162,9 +163,9 @@ public class CityServiceImpl implements CityService {
         }
         CityDTO dto = new CityDTO();
         dto.setId(city.getId());
-        dto.setCreatedDate(city.getCreatedAt().toString());
+        dto.setCreatedDate(DateFormatUtils.formatDateTime(city.getCreatedAt()));
         if (city.getUpdatedAt() != null) {
-            dto.setUpdatedDate(city.getUpdatedAt().toString());
+            dto.setUpdatedDate(DateFormatUtils.formatDateTime(city.getUpdatedAt()));
         }
         dto.setName(city.getName());
         dto.setStateId(city.getState().getId());

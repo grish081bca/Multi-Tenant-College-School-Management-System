@@ -12,9 +12,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 import java.util.List;
+import com.college.erp.collegemanagementsystem.util.DateFormatUtils;
 
 /**
  * @author grish
@@ -22,8 +21,6 @@ import java.util.List;
  */
 @ControllerAdvice
 public class MenuModelAdvice {
-
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a", Locale.ENGLISH);
 
     private final MenuTemplateService menuTemplateService;
     private final UserRepository userRepository;
@@ -48,9 +45,9 @@ public class MenuModelAdvice {
         model.addAttribute("currentUserFullName", principal.getFullName());
         model.addAttribute("currentUserInitial", initial(principal.getFullName(), principal.getUsername()));
         model.addAttribute("currentTenantCode", principal.getTenantCode());
-        model.addAttribute("currentLastLoginAt", formatDateTime(principal.getLastLoginAt()));
+        model.addAttribute("currentLastLoginAt", DateFormatUtils.formatDateTime(principal.getLastLoginAt()));
         model.addAttribute("currentLastLoginAtIso", formatIsoDateTime(principal.getLastLoginAt()));
-        model.addAttribute("currentPasswordChangedAt", principal.getPasswordChangedAt());
+        model.addAttribute("currentPasswordChangedAt", DateFormatUtils.formatDateTime(principal.getPasswordChangedAt()));
         userRepository.findById(principal.getUserId()).ifPresent(user -> addFreshUserAttributes(model, user));
     }
 
@@ -59,13 +56,9 @@ public class MenuModelAdvice {
         String fullName = buildFullName(user);
         model.addAttribute("currentUserFullName", fullName);
         model.addAttribute("currentUserInitial", initial(fullName, user.getUsername()));
-        model.addAttribute("currentLastLoginAt", formatDateTime(user.getLastLoginAt()));
+        model.addAttribute("currentLastLoginAt", DateFormatUtils.formatDateTime(user.getLastLoginAt()));
         model.addAttribute("currentLastLoginAtIso", formatIsoDateTime(user.getLastLoginAt()));
-        model.addAttribute("currentPasswordChangedAt", user.getPasswordChangedAt());
-    }
-
-    private String formatDateTime(OffsetDateTime dateTime) {
-        return dateTime == null ? null : DATE_TIME_FORMATTER.format(dateTime);
+        model.addAttribute("currentPasswordChangedAt", DateFormatUtils.formatDateTime(user.getPasswordChangedAt()));
     }
 
     private String formatIsoDateTime(OffsetDateTime dateTime) {

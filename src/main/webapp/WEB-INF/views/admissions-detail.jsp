@@ -80,7 +80,7 @@
             </thead>
             <tbody><c:forEach items="${changeLogs}" var="log">
                 <tr>
-                    <td><c:out value="${log.createdAt}"/></td>
+                    <td><c:out value="${log.createdAtDisplay}"/></td>
                     <td><c:out value="${log.action}"/></td>
                     <td><c:out value="${log.fieldName}"/></td>
                     <td><c:out value="${log.oldValue}"/> → <c:out value="${log.newValue}"/></td>

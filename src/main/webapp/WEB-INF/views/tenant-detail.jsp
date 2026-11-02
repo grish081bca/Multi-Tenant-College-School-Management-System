@@ -78,7 +78,7 @@
             <tbody>
             <c:forEach items="${changeLogs}" var="log">
                 <tr>
-                    <td><c:out value="${log.createdAt}"/></td>
+                    <td><c:out value="${log.createdAtDisplay}"/></td>
                     <td><span class="log-action"><c:out value="${log.action}"/></span></td>
                     <td><c:out value="${empty log.fieldName ? '-' : log.fieldName}"/></td>
                     <td><c:out value="${empty log.oldValue ? '-' : log.oldValue}"/></td>
