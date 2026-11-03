@@ -37,6 +37,8 @@ document.querySelectorAll('.profile-trigger').forEach(trigger => {
     });
 });
 
+const menuSearchInput = document.getElementById('sidebarMenuSearch');
+
 document.querySelectorAll('.menu-toggle').forEach(trigger => {
     trigger.addEventListener('click', (e) => {
         const group = trigger.closest('.menu-group');
@@ -47,8 +49,12 @@ document.querySelectorAll('.menu-toggle').forEach(trigger => {
             localStorage.setItem('erp.sidebarCollapsed', 'false');
             document.querySelectorAll('.sidebar-toggle').forEach(t => t.setAttribute('aria-expanded', 'true'));
         }
-        group.classList.toggle('open');
-        saveOpenGroups();
+        if (menuSearchInput?.value.trim()) {
+            group.classList.add('open');
+        } else {
+            group.classList.toggle('open');
+            saveOpenGroups();
+        }
         if (e.target && e.target.tagName === 'BUTTON') e.preventDefault();
     });
 });
@@ -84,6 +90,46 @@ function restoreOpenGroups() {
     } catch (e) {
     }
 }
+
+function applyMenuSearch() {
+    const query = menuSearchInput?.value.trim().toLocaleLowerCase() || '';
+    const groups = document.querySelectorAll('.sidebar-nav .menu-group');
+
+    if (!query) {
+        groups.forEach(group => {
+            group.hidden = false;
+            group.querySelectorAll('.sub-menu').forEach(link => {
+                link.hidden = false;
+            });
+            group.classList.remove('open');
+        });
+        restoreOpenGroups();
+        applyCurrentMenuState();
+        return;
+    }
+
+    groups.forEach(group => {
+        const menuText = group.querySelector('.super-menu .menu-text')?.textContent || '';
+        const menuMatches = menuText.trim().toLocaleLowerCase().includes(query);
+        const subMenus = Array.from(group.querySelectorAll('.sub-menu'));
+        let hasMatchingSubMenu = false;
+
+        subMenus.forEach(link => {
+            const matches = link.textContent.trim().toLocaleLowerCase().includes(query);
+            link.hidden = !menuMatches && !matches;
+            hasMatchingSubMenu ||= matches;
+        });
+
+        group.hidden = !menuMatches && !hasMatchingSubMenu;
+        if (group.hidden) {
+            group.classList.remove('open');
+        } else if (subMenus.some(link => !link.hidden)) {
+            group.classList.add('open');
+        }
+    });
+}
+
+menuSearchInput?.addEventListener('input', applyMenuSearch);
 
 function normalizePath(path) {
     if (!path) return '';

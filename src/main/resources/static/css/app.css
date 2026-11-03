@@ -70,7 +70,49 @@ body {
     font-size: 12px;
 }
 
+.sidebar-search {
+    position: relative;
+    margin: 14px 4px 0;
+}
+
+.sidebar-search-label {
+    display: block;
+    margin-bottom: 6px;
+    color: #cbd5e1;
+    font-size: 12px;
+}
+
+.sidebar-search > i {
+    position: absolute;
+    left: 11px;
+    bottom: 11px;
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+.sidebar-search input {
+    width: 100%;
+    min-height: 38px;
+    padding: 8px 10px 8px 34px;
+    border: 1px solid #374151;
+    border-radius: 7px;
+    outline: none;
+    background: #1f2937;
+    color: #f8fafc;
+    font: inherit;
+}
+
+.sidebar-search input::placeholder {
+    color: #9ca3af;
+}
+
+.sidebar-search input:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px #2563eb55;
+}
+
 .app-shell.sidebar-collapsed .logo-text,
+.app-shell.sidebar-collapsed .sidebar-search,
 .app-shell.sidebar-collapsed .sub-menu-list,
 .app-shell.sidebar-collapsed .menu-caret {
     display: none;

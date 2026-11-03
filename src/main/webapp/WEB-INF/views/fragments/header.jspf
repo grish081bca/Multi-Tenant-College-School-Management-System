@@ -18,6 +18,9 @@
             <span class="logo-mark">CE</span>
             <span class="logo-text"><strong>College ERP</strong><small><c:out value="${currentTenantCode}"/></small></span>
         </a>
+        <div class="sidebar-search">
+            <input id="sidebarMenuSearch" type="search" placeholder="Search menus..." autocomplete="off">
+        </div>
         <nav class="sidebar-nav">
             <c:forEach items="${allowedMenus}" var="superMenu">
                 <c:if test="${empty superMenu.parentMenuId}">
