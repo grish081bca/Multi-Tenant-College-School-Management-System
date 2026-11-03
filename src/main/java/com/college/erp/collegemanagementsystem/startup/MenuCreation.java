@@ -171,6 +171,12 @@ public class MenuCreation {
                 "SUBJECT", "SUBJECTS_ADD", "SUBJECTS_LIST", "PROGRAM_SUBJECT", "PROGRAM_SUBJECTS_ADD", "PROGRAM_SUBJECTS_LIST",
                 "STUDENT", "STUDENTS_ADD", "STUDENTS_LIST", "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_ADD", "STUDENT_ENROLLMENTS_LIST",
                 "ADMISSION", "ADMISSIONS_ADD", "ADMISSIONS_LIST", "EMPLOYEE", "EMPLOYEES_ADD", "EMPLOYEES_LIST");
+        List<String> academicWriteMenus = List.of(
+                "DEPARTMENTS_ADD", "FACULTIES_ADD", "PROGRAMS_ADD", "ACADEMIC_YEARS_ADD", "SEMESTERS_ADD",
+                "SECTIONS_ADD", "SUBJECTS_ADD", "PROGRAM_SUBJECTS_ADD", "STUDENTS_ADD", "STUDENT_ENROLLMENTS_ADD",
+                "ADMISSIONS_ADD", "EMPLOYEES_ADD");
+        List<String> systemAdminMenus = new ArrayList<>(allMenus);
+        systemAdminMenus.removeAll(academicWriteMenus);
         List<String> collegeAdminMenus = mergeMenus(List.of("DASHBOARD"), academicMenus);
         List<String> principalMenus = mergeMenus(List.of("DASHBOARD"), academicMenus);
         List<String> teacherMenus = mergeMenus(List.of("DASHBOARD"), List.of(
@@ -207,7 +213,7 @@ public class MenuCreation {
 
         // The two platform administrator types need the complete menu catalog, including academics.
         createTemplate(UserType.SUPER_ADMIN, "Super Admin Menu Template", allMenus, menus);
-        createTemplate(UserType.SYSTEM_ADMIN, "System Admin Menu Template", allMenus, menus);
+        createTemplate(UserType.SYSTEM_ADMIN, "System Admin Menu Template", systemAdminMenus, menus);
         createTemplate(UserType.COLLEGE_ADMIN, "College Admin Menu Template", collegeAdminMenus, menus);
         createTemplate(UserType.COLLEGE_BRANCH, "College Branch Menu Template", branchMenus, menus);
         createTemplate(UserType.PRINCIPAL, "Principal Menu Template", principalMenus, menus);

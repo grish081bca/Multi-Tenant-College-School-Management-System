@@ -25,9 +25,12 @@ public final class RolePermissionPolicy {
 
     private static Map<UserType, Set<Permission>> buildPermissions() {
         Map<UserType, Set<Permission>> permissions = new EnumMap<>(UserType.class);
-        Set<Permission> platformAdmin = EnumSet.allOf(Permission.class);
-        permissions.put(UserType.SYSTEM_ADMIN, platformAdmin);
-        permissions.put(UserType.SUPER_ADMIN, platformAdmin);
+        Set<Permission> superAdmin = EnumSet.allOf(Permission.class);
+        permissions.put(UserType.SUPER_ADMIN, superAdmin);
+
+        Set<Permission> systemAdmin = EnumSet.allOf(Permission.class);
+        systemAdmin.removeAll(EnumSet.of(Permission.ACADEMIC_WRITE, Permission.ADMISSION_WRITE, Permission.EMPLOYEE_WRITE));
+        permissions.put(UserType.SYSTEM_ADMIN, systemAdmin);
 
         Set<Permission> collegeManagers = EnumSet.of(Permission.ACADEMIC_READ, Permission.ACADEMIC_WRITE,
                 Permission.ADMISSION_READ, Permission.ADMISSION_WRITE, Permission.EMPLOYEE_READ, Permission.EMPLOYEE_WRITE);

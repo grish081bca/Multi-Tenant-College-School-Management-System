@@ -48,9 +48,9 @@ public abstract class AbstractAcademicWebController {
         model.addAttribute("page", service.search(q, filters, status, page, size, tenantId));
         model.addAttribute("module", module()); model.addAttribute("moduleTitle", title());
         model.addAttribute("q", q); model.addAttribute("selectedStatus", status); model.addAttribute("statuses", Status.values());
-        model.addAttribute("systemAdmin", isSystemAdmin()); model.addAttribute("selectedTenantId", tenantId);
+        model.addAttribute("platformAdmin", isPlatformAdmin()); model.addAttribute("selectedTenantId", tenantId);
         model.addAttribute("canManageAcademic", canManageAcademic());
-        if (isSystemAdmin()) model.addAttribute("tenants", tenants.getAllTenants());
+        if (isPlatformAdmin()) model.addAttribute("tenants", tenants.getAllTenants());
         model.addAttribute("academicFilters", filterFields()); model.addAttribute("selectedFilters", filters);
         Map<String, Object> retained = new LinkedHashMap<>(); retained.put("q", q); retained.putAll(filters); retained.put("status", status); retained.put("tenantId", tenantId);
         WebPagination.add(model, base(), size, retained);
@@ -90,7 +90,7 @@ public abstract class AbstractAcademicWebController {
     @GetMapping("/{id}")
     public String view(@PathVariable Long id, @RequestParam(required = false) Long tenantId, Model model, RedirectAttributes flash) {
         try {
-            AcademicRecordDTO record = service.get(id, tenantId); model.addAttribute("record", record); model.addAttribute("module", module()); model.addAttribute("moduleTitle", title()); model.addAttribute("selectedTenantId", record.getTenantId()); model.addAttribute("systemAdmin", isSystemAdmin());
+            AcademicRecordDTO record = service.get(id, tenantId); model.addAttribute("record", record); model.addAttribute("module", module()); model.addAttribute("moduleTitle", title()); model.addAttribute("selectedTenantId", record.getTenantId()); model.addAttribute("platformAdmin", isPlatformAdmin());
             model.addAttribute("canManageAcademic", canManageAcademic());
             model.addAttribute("changeLogs", changeLogs.getRecentChanges(entityName(), id)); return viewPrefix() + "-detail";
         } catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); return redirectList(tenantId); }
@@ -118,8 +118,8 @@ public abstract class AbstractAcademicWebController {
         record.setTenantId(tenantId);
         model.addAttribute("record", record); model.addAttribute("module", module()); model.addAttribute("moduleTitle", title());
         model.addAttribute("statuses", Status.values()); model.addAttribute("today", java.time.LocalDate.now());
-        model.addAttribute("systemAdmin", isSystemAdmin()); model.addAttribute("selectedTenantId", tenantId);
-        if (isSystemAdmin()) model.addAttribute("tenants", tenants.getAllTenants());
+        model.addAttribute("platformAdmin", isPlatformAdmin()); model.addAttribute("selectedTenantId", tenantId);
+        if (isPlatformAdmin()) model.addAttribute("tenants", tenants.getAllTenants());
         switch (module()) {
             case "departments" -> model.addAttribute("faculties", workflow.options("faculties", tenantId));
             case "programs" -> { model.addAttribute("faculties", workflow.options("faculties", tenantId)); model.addAttribute("departments", workflow.options("departments", tenantId)); }
@@ -157,9 +157,11 @@ public abstract class AbstractAcademicWebController {
     private String message(Exception ex) { return ex.getMessage() == null ? "The request could not be completed." : ex.getMessage(); }
     private String bindingMessage(BindingResult binding) { return binding.getFieldErrors().stream().map(error -> error.getField() + ": " + error.getDefaultMessage()).collect(Collectors.joining("; ")); }
     private String entityName() { return switch (module()) { case "academic-years" -> "AcademicYear"; case "program-subjects" -> "ProgramSubject"; case "student-enrollments" -> "StudentEnrollment"; default -> title().replace(" ", ""); }; }
-    private boolean isSystemAdmin() {
+    private boolean isPlatformAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.getPrincipal() instanceof AuthenticatedUserPrincipal principal && principal.getUserType() == com.college.erp.collegemanagementsystem.enums.UserType.SYSTEM_ADMIN;
+        return auth != null && auth.getPrincipal() instanceof AuthenticatedUserPrincipal principal
+                && (principal.getUserType() == com.college.erp.collegemanagementsystem.enums.UserType.SYSTEM_ADMIN
+                || principal.getUserType() == com.college.erp.collegemanagementsystem.enums.UserType.SUPER_ADMIN);
     }
     private boolean canManageAcademic() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

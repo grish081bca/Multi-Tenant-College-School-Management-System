@@ -260,7 +260,8 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
     private Long resolveTenantId(Long requestedTenantId, boolean required) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !(auth.getPrincipal() instanceof AuthenticatedUserPrincipal p)) throw new org.springframework.security.access.AccessDeniedException("An authenticated account is required.");
-        if (p.getUserType() == com.college.erp.collegemanagementsystem.enums.UserType.SYSTEM_ADMIN) {
+        if (p.getUserType() == com.college.erp.collegemanagementsystem.enums.UserType.SYSTEM_ADMIN
+                || p.getUserType() == com.college.erp.collegemanagementsystem.enums.UserType.SUPER_ADMIN) {
             if (requestedTenantId == null) {
                 if (required) throw new ValidationException("Select a tenant to continue.");
                 return null;
