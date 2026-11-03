@@ -15,7 +15,11 @@ import java.util.List;
 public interface MenuTemplateService {
     MenuTemplateDTO assignMenuTemplate(MenuTemplateDTO dto);
 
+    MenuTemplateDTO update(Long id, MenuTemplateDTO dto);
+
     MenuTemplateDTO changeStatus(Long id, MenuStatus status);
+
+    MenuTemplateDTO findOne(Long id);
 
     List<MenuTemplateDTO> findAll();
 

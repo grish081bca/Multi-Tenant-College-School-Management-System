@@ -44,6 +44,18 @@ public class MenuTemplateServiceImpl implements MenuTemplateService {
     }
     @Override
     public MenuTemplateDTO assignMenuTemplate(MenuTemplateDTO dto) {
+        return saveMenuTemplate(dto, null);
+    }
+
+    @Override
+    public MenuTemplateDTO update(Long id, MenuTemplateDTO dto) {
+        if (id == null) {
+            throw new IllegalArgumentException("Menu template ID is required.");
+        }
+        return saveMenuTemplate(dto, id);
+    }
+
+    private MenuTemplateDTO saveMenuTemplate(MenuTemplateDTO dto, Long id) {
         if (dto == null || dto.getUserType() == null || dto.getUserType().isBlank()) {
             throw new IllegalArgumentException("User type is required.");
         }
@@ -62,7 +74,17 @@ public class MenuTemplateServiceImpl implements MenuTemplateService {
         if (menus.size() != menuIds.stream().distinct().count()) {
             throw new ResourceNotFoundException("One or more menus were not found.");
         }
-        MenuTemplate template = menuTemplateRepository.findByUserType(userType).orElse(new MenuTemplate());
+        MenuTemplate template;
+        if (id == null) {
+            template = menuTemplateRepository.findByUserType(userType).orElse(new MenuTemplate());
+        } else {
+            template = menuTemplateRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Menu template not found."));
+            MenuTemplate templateForUserType = menuTemplateRepository.findByUserType(userType).orElse(null);
+            if (templateForUserType != null && !templateForUserType.getId().equals(id)) {
+                throw new IllegalArgumentException("A menu template already exists for this user type.");
+            }
+        }
         template.setName(dto.getName().trim());
         template.setUserType(userType);
         template.getMenus().clear();
@@ -70,6 +92,15 @@ public class MenuTemplateServiceImpl implements MenuTemplateService {
         template.setStatus(dto.getStatus() == null || dto.getStatus().isBlank() ? MenuStatus.ACTIVE : MenuStatus.valueOf(dto.getStatus()));
         return toDto(menuTemplateRepository.save(template));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MenuTemplateDTO findOne(Long id) {
+        MenuTemplate template = menuTemplateRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Menu template not found."));
+        return toDto(template);
+    }
+
     @Override
     public MenuTemplateDTO changeStatus(Long id, MenuStatus status) {
         MenuTemplate template = menuTemplateRepository.findById(id)

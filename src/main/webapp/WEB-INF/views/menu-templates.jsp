@@ -38,6 +38,10 @@
                     <td><c:out value="${template.menuName}"/></td>
                     <td><span class="status-pill status-${template.status}"><c:out value="${template.status}"/></span></td>
                     <td class="actions-cell">
+                        <a class="action-button secondary" href="<c:url value='/web/menu-templates/${template.id}/edit'/>">
+                            <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                            <span>Edit</span>
+                        </a>
                         <button class="action-button secondary menu-template-status-trigger" type="button"
                                 data-action="<c:url value='/web/menu-templates/${template.id}/status'/>"
                                 data-status="${template.status}"

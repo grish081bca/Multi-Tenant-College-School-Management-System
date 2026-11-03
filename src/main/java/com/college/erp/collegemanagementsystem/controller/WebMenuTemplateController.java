@@ -49,12 +49,36 @@ public class WebMenuTemplateController {
         add(model);
         return "menu-template-add";
     }
+
+    @GetMapping("/web/menu-templates/{id}/edit")
+    public String editForm(@PathVariable Long id, Model model) {
+        add(model);
+        MenuTemplateDTO templateRequest = menuTemplateService.findOne(id);
+        model.addAttribute("menus", menuService.findAll().stream()
+                .filter(menu -> "ACTIVE".equals(menu.getStatus()) || templateRequest.getMenuIds().contains(menu.getId()))
+                .toList());
+        model.addAttribute("templateRequest", templateRequest);
+        model.addAttribute("selectedUserType", UserType.valueOf(templateRequest.getUserType()));
+        model.addAttribute("selectedStatus", MenuStatus.valueOf(templateRequest.getStatus()));
+        model.addAttribute("editMode", true);
+        return "menu-template-add";
+    }
+
     @PostMapping("/web/menu-templates")
     public String save(@ModelAttribute MenuTemplateDTO dto, RedirectAttributes attributes) {
         menuTemplateService.assignMenuTemplate(dto);
         attributes.addFlashAttribute("success", "Menu template saved successfully.");
         return "redirect:/web/menu-templates";
     }
+
+    @PostMapping("/web/menu-templates/{id}")
+    public String update(@PathVariable Long id, @ModelAttribute MenuTemplateDTO dto,
+                         RedirectAttributes attributes) {
+        menuTemplateService.update(id, dto);
+        attributes.addFlashAttribute("success", "Menu template updated successfully.");
+        return "redirect:/web/menu-templates";
+    }
+
     @PostMapping("/web/menu-templates/{id}/status")
     public String status(@PathVariable Long id, @RequestParam MenuStatus status, RedirectAttributes attributes) {
         menuTemplateService.changeStatus(id, status);
