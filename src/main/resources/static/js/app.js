@@ -114,6 +114,77 @@ function applyCurrentMenuState() {
     }
 }
 
+const sidebarScrollStorageKey = 'erp.sidebarScrollTop';
+
+function restoreSavedSidebarScrollPosition() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+    try {
+        const savedPosition = Number(sessionStorage.getItem(sidebarScrollStorageKey));
+        if (Number.isFinite(savedPosition) && savedPosition >= 0) {
+            sidebar.scrollTop = savedPosition;
+        }
+    } catch (e) {
+    }
+}
+
+function keepSidebarItemsVisible(sidebar, items, priorityItem) {
+    if (!sidebar || !items.length) return;
+    const sidebarRect = sidebar.getBoundingClientRect();
+    const visibleTop = sidebarRect.top + sidebar.clientTop;
+    const visibleBottom = visibleTop + sidebar.clientHeight;
+    const itemRects = items.filter(Boolean).map(item => item.getBoundingClientRect());
+    if (!itemRects.length) return;
+    const top = Math.min(...itemRects.map(rect => rect.top));
+    const bottom = Math.max(...itemRects.map(rect => rect.bottom));
+
+    if (bottom - top <= sidebar.clientHeight) {
+        if (top < visibleTop) {
+            sidebar.scrollTop -= visibleTop - top;
+        } else if (bottom > visibleBottom) {
+            sidebar.scrollTop += bottom - visibleBottom;
+        }
+        return;
+    }
+
+    const priorityRect = priorityItem?.getBoundingClientRect();
+    if (priorityRect?.top < visibleTop) sidebar.scrollTop -= visibleTop - priorityRect.top;
+    else if (priorityRect?.bottom > visibleBottom) sidebar.scrollTop += priorityRect.bottom - visibleBottom;
+}
+
+function restoreSidebarScroll() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+
+    restoreSavedSidebarScrollPosition();
+
+    const activeLink = document.querySelector('.sidebar-nav a[aria-current="page"]');
+    if (!activeLink) return;
+
+    const activeGroup = activeLink.closest('.menu-group');
+    const parentMenu = activeGroup?.querySelector('.super-menu');
+    keepSidebarItemsVisible(sidebar, [parentMenu, activeLink], activeLink);
+
+    try {
+        sessionStorage.setItem(sidebarScrollStorageKey, String(sidebar.scrollTop));
+    } catch (e) {
+    }
+}
+
+restoreSavedSidebarScrollPosition();
+
+document.querySelector('.sidebar-nav')?.addEventListener('click', event => {
+    const link = event.target.closest('a[href]');
+    if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+    try {
+        sessionStorage.setItem(sidebarScrollStorageKey, String(sidebar.scrollTop));
+    } catch (e) {
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.menu-group.open').forEach(g => g.classList.remove('open'));
     const appShell = document.getElementById('appShell');
@@ -121,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         restoreOpenGroups();
     }
     applyCurrentMenuState();
+    restoreSidebarScroll();
 });
 
 const appShell = document.getElementById('appShell');
