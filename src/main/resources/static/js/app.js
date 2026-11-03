@@ -160,15 +160,15 @@ function applyCurrentMenuState() {
     }
 }
 
-const sidebarScrollStorageKey = 'erp.sidebarScrollTop';
+const sidebarScrollStorageKey = 'erp.sidebarMenuScrollTop';
 
 function restoreSavedSidebarScrollPosition() {
-    const sidebar = document.querySelector('.sidebar');
-    if (!sidebar) return;
+    const menuList = document.querySelector('.sidebar-nav');
+    if (!menuList) return;
     try {
         const savedPosition = Number(sessionStorage.getItem(sidebarScrollStorageKey));
         if (Number.isFinite(savedPosition) && savedPosition >= 0) {
-            sidebar.scrollTop = savedPosition;
+            menuList.scrollTop = savedPosition;
         }
     } catch (e) {
     }
@@ -199,8 +199,8 @@ function keepSidebarItemsVisible(sidebar, items, priorityItem) {
 }
 
 function restoreSidebarScroll() {
-    const sidebar = document.querySelector('.sidebar');
-    if (!sidebar) return;
+    const menuList = document.querySelector('.sidebar-nav');
+    if (!menuList) return;
 
     restoreSavedSidebarScrollPosition();
 
@@ -209,10 +209,10 @@ function restoreSidebarScroll() {
 
     const activeGroup = activeLink.closest('.menu-group');
     const parentMenu = activeGroup?.querySelector('.super-menu');
-    keepSidebarItemsVisible(sidebar, [parentMenu, activeLink], activeLink);
+    keepSidebarItemsVisible(menuList, [parentMenu, activeLink], activeLink);
 
     try {
-        sessionStorage.setItem(sidebarScrollStorageKey, String(sidebar.scrollTop));
+        sessionStorage.setItem(sidebarScrollStorageKey, String(menuList.scrollTop));
     } catch (e) {
     }
 }
@@ -223,10 +223,10 @@ document.querySelector('.sidebar-nav')?.addEventListener('click', event => {
     const link = event.target.closest('a[href]');
     if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
 
-    const sidebar = document.querySelector('.sidebar');
-    if (!sidebar) return;
+    const menuList = document.querySelector('.sidebar-nav');
+    if (!menuList) return;
     try {
-        sessionStorage.setItem(sidebarScrollStorageKey, String(sidebar.scrollTop));
+        sessionStorage.setItem(sidebarScrollStorageKey, String(menuList.scrollTop));
     } catch (e) {
     }
 });
