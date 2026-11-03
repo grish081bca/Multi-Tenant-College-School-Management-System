@@ -59,7 +59,7 @@
                             class="muted"><c:out value="${a.academicYearName}"/> · <c:out
                             value="${a.semesterName}"/></span></td>
                     <td><c:out value="${a.applicationDate}"/></td>
-                    <td><span class="status-pill"><c:out value="${a.status}"/></span></td>
+                    <td><span class="status-pill status-${a.status}"><c:out value="${a.status}"/></span></td>
                     <td class="actions-cell"><c:url var="viewUrl" value="/web/admissions/${a.id}"><c:if
                             test="${systemAdmin}"><c:param name="tenantId" value="${a.tenantId}"/></c:if></c:url><a
                             class="action-button secondary" href="${viewUrl}">View</a><c:if

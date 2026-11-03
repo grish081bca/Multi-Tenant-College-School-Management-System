@@ -36,7 +36,7 @@
                     <td><c:out value="${template.name}"/></td>
                     <td><c:out value="${template.userType}"/></td>
                     <td><c:out value="${template.menuName}"/></td>
-                    <td><c:out value="${template.status}"/></td>
+                    <td><span class="status-pill status-${template.status}"><c:out value="${template.status}"/></span></td>
                     <td class="actions-cell">
                         <button class="action-button secondary menu-template-status-trigger" type="button"
                                 data-action="<c:url value='/web/menu-templates/${template.id}/status'/>"

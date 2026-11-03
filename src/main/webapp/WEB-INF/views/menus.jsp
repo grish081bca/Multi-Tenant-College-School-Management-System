@@ -38,7 +38,7 @@
                     <td><c:out value="${menu.menuUrl}"/></td>
                     <td><c:out value="${menu.parentMenuName}"/></td>
                     <td><c:out value="${menu.menuType}"/></td>
-                    <td><c:out value="${menu.status}"/></td>
+                    <td><span class="status-pill status-${menu.status}"><c:out value="${menu.status}"/></span></td>
                     <td class="actions-cell">
                         <button class="action-button secondary menu-status-trigger" type="button"
                                 data-action="<c:url value='/web/menus/${menu.id}/status'/>"

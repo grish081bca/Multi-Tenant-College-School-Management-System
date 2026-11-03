@@ -35,7 +35,7 @@
                 <tr>
                     <td><c:out value="${template.userType}"/></td>
                     <td><c:out value="${empty template.menuTemplateName ? 'Default' : template.menuTemplateName}"/></td>
-                    <td><c:out value="${template.status}"/></td>
+                    <td><span class="status-pill status-${template.status}"><c:out value="${template.status}"/></span></td>
                     <td class="actions-cell">
                         <button class="action-button secondary user-template-status-trigger" type="button"
                                 data-action="<c:url value='/web/user-templates/${template.id}/status'/>"

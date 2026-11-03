@@ -858,9 +858,32 @@ th {
     color: #166534;
 }
 
-.status-INACTIVE {
+.status-ACCEPTED {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-INACTIVE,
+.status-DISABLED,
+.status-WITHDRAWN {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.status-REJECTED,
+.status-LOCKED,
+.status-SUSPENDED {
     background: #fee2e2;
     color: #991b1b;
+}
+
+.status-PENDING,
+.status-DRAFT,
+.status-SUBMITTED,
+.status-UNDER_REVIEW,
+.status-PASSWORD_RESET_REQUIRED {
+    background: #fef3c7;
+    color: #92400e;
 }
 
 .tenant-overview-grid {

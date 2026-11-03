@@ -56,7 +56,7 @@
                             value="${e.designation}"/></span></td>
                     <td><c:out value="${e.departmentName}"/></td>
                     <td><c:out value="${e.email}"/><br><c:out value="${e.phone}"/></td>
-                    <td><span class="status-pill"><c:out value="${e.status}"/></span></td>
+                    <td><span class="status-pill status-${e.status}"><c:out value="${e.status}"/></span></td>
                     <td class="actions-cell"><c:url var="viewUrl" value="/web/employees/${e.id}"><c:if
                             test="${systemAdmin}"><c:param name="tenantId" value="${e.tenantId}"/></c:if></c:url><a
                             class="action-button secondary" href="${viewUrl}">View</a><c:if test="${canWrite}"><c:url

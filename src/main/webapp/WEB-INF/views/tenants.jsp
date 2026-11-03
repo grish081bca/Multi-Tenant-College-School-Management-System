@@ -90,7 +90,7 @@
                     <td><c:out value="${tenant.stateName}"/></td>
                     <td><c:out value="${tenant.cityName}"/></td>
                     <td><c:out value="${tenant.postalCode}"/></td>
-                    <td><c:out value="${tenant.status}"/></td>
+                    <td><span class="status-pill status-${tenant.status}"><c:out value="${tenant.status}"/></span></td>
                     <td class="actions-cell">
                         <a class="action-button secondary" href="<c:url value='/web/tenants/${tenant.id}/edit'/>" title="Edit tenant" aria-label="Edit tenant">
                             <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
