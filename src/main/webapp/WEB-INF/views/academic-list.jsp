@@ -1,10 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ include file="fragments/header.jspf" %>
-<section class="page-heading">
-    <div><p class="eyebrow">Academic administration</p><h1>${moduleTitle}</h1><p class="muted"><c:choose><c:when test="${platformAdmin}">Manage ${moduleTitle.toLowerCase()} records across tenants or filter by tenant.</c:when><c:otherwise>Manage ${moduleTitle.toLowerCase()} records for your college.</c:otherwise></c:choose></p></div>
-    <c:url var="addAcademicUrl" value="/web/${module}/add"><c:if test="${platformAdmin and not empty selectedTenantId}"><c:param name="tenantId" value="${selectedTenantId}"/></c:if></c:url>
-    <c:if test="${canManageAcademic}"><a class="button primary" href="${addAcademicUrl}"><i class="fa-solid fa-plus"></i> Add ${moduleTitle}</a></c:if>
-</section>
 <section class="filter-panel">
     <form class="filter-grid" action="<c:url value='/web/${module}'/>" method="get">
         <label>Master Search<input name="q" value="<c:out value='${q}'/>" placeholder="Search all ${moduleTitle.toLowerCase()} columns"></label>

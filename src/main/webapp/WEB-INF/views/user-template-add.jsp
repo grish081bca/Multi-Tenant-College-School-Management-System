@@ -7,10 +7,6 @@
 <%--<%@ include file="fragments/page-header.jspf" %>--%>
 <section class="form-panel">
     <form class="form-grid enterprise-form" action="<c:url value='/web/user-templates'/>" method="post">
-        <label>Tenant<select name="tenantId" required>
-            <option value="">Select tenant</option>
-            <c:forEach items="${tenants}" var="tenant"><option value="${tenant.id}">${tenant.tenantName}</option></c:forEach>
-        </select></label>
         <label>User type<select name="userType" required>
             <c:forEach items="${userTypes}" var="type"><option value="${type}">${type}</option></c:forEach>
         </select></label>
