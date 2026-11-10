@@ -1066,6 +1066,86 @@ th {
 .dashboard-hero-copy { max-width: 700px; }
 .dashboard-eyebrow { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 15px; color: #c8d2ff; font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
 .dashboard-eyebrow i { color: #f9c76a; }
+
+.employee-detail-hero {
+    align-items: flex-start;
+}
+
+.employee-avatar {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.employee-hero-actions {
+    max-width: 100%;
+}
+
+.employee-status-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.employee-status-form select {
+    min-height: 40px;
+    width: auto;
+    min-width: 132px;
+    padding: 8px 30px 8px 11px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #fff;
+    color: #182230;
+    font: inherit;
+}
+
+.employee-status-form .button {
+    white-space: nowrap;
+}
+
+.employee-overview-grid {
+    margin-bottom: 16px;
+}
+
+.employee-log-table {
+    min-width: 1080px;
+}
+
+.employee-delete-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+}
+
+.employee-delete-actions form {
+    margin: 0;
+}
+
+.employee-delete-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+@media (max-width: 720px) {
+    .employee-detail-hero {
+        align-items: stretch;
+    }
+
+    .employee-status-form {
+        align-items: stretch;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .employee-status-form select,
+    .employee-status-form .button {
+        width: 100%;
+        justify-content: center;
+    }
+}
 .dashboard-hero h1 { margin: 0; color: #fff; font-size: clamp(28px,3.2vw,40px); line-height: 1.12; letter-spacing: -.04em; }
 .dashboard-hero-copy p { margin: 10px 0 0; color: #d7defe; font-size: 14px; }
 .dashboard-hero-mark { position: absolute; right: 9%; top: 34px; display: grid; place-items: center; width: 126px; height: 126px; border: 1px solid #ffffff28; border-radius: 28px; background: linear-gradient(145deg,#ffffff22,#ffffff08); color: #ffffffd9; font-size: 53px; transform: rotate(8deg); box-shadow: 0 16px 45px #111d4e30; }
