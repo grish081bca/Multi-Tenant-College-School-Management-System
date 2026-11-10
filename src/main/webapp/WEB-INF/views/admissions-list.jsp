@@ -1,12 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ include file="fragments/header.jspf" %>
-<section class="page-heading">
-    <div><p class="eyebrow">Admissions</p>
-        <h1>Student Admissions</h1>
-        <p class="muted">Review applications and admit successful applicants into the selected section.</p></div>
-    <c:if test="${canWrite}"><c:url var="addUrl" value="/web/admissions/add"><c:if
-            test="${systemAdmin and not empty selectedTenantId}"><c:param name="tenantId" value="${selectedTenantId}"/></c:if></c:url><a
-            class="button primary" href="${addUrl}">New application</a></c:if></section>
 <section class="filter-panel">
     <form class="filter-grid" method="get" action="<c:url value='/web/admissions'/>">
         <label>Search<input name="q" value="<c:out value='${q}'/>"

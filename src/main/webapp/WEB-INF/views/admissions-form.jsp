@@ -1,9 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ include file="fragments/header.jspf" %>
-<section class="page-heading">
-    <div><p class="eyebrow">Admissions</p>
-        <h1>${isEdit ? 'Edit' : 'New'} application</h1></div>
-    <a class="button secondary" href="<c:url value='/web/admissions'/>">Back to list</a></section>
 <section class="form-panel"><c:choose><c:when test="${isEdit}"><c:url var="formAction"
                                                                       value="/web/admissions/${id}"/></c:when><c:otherwise><c:url
         var="formAction" value="/web/admissions"/></c:otherwise></c:choose>
