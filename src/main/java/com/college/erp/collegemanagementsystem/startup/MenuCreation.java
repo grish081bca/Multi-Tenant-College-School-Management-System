@@ -163,7 +163,29 @@ public class MenuCreation {
                 subMenu("MARKS_VERIFICATION_LIST", "Pending Verification", "/web/marks-verification", "MARKS_VERIFICATION", 149),
 
                 superMenu("RESULTS", "Results and GPA", null, "fa-solid fa-square-poll-vertical", 150),
-                subMenu("RESULTS_LIST", "Results Processing", "/web/results", "RESULTS", 151)
+                subMenu("RESULTS_LIST", "Results Processing", "/web/results", "RESULTS", 151),
+
+                superMenu("CERTIFICATE", "Student Certificates", null, "fa-solid fa-certificate", 160),
+                subMenu("CERTIFICATES_ADD", "Issue Certificate", "/web/certificates/add", "CERTIFICATE", 161),
+                subMenu("CERTIFICATES_LIST", "Certificate Register", "/web/certificates", "CERTIFICATE", 162),
+
+                superMenu("FEE_STRUCTURE", "Fee Structures", null, "fa-solid fa-list-check", 170),
+                subMenu("FEE_STRUCTURES_ADD", "Add Fee Structure", "/web/fee-structures/add", "FEE_STRUCTURE", 171),
+                subMenu("FEE_STRUCTURES_LIST", "Fee Structure Register", "/web/fee-structures", "FEE_STRUCTURE", 172),
+
+                superMenu("FEE_COLLECTION", "Student Fee Collection", null, "fa-solid fa-cash-register", 180),
+                subMenu("FEE_COLLECTIONS_ADD", "Collect Fee", "/web/fee-collections/add", "FEE_COLLECTION", 181),
+                subMenu("FEE_COLLECTIONS_LIST", "Payment History", "/web/fee-collections", "FEE_COLLECTION", 182),
+
+                superMenu("NOTICE", "Notice Management", null, "fa-solid fa-bullhorn", 190),
+                subMenu("NOTICES_ADD", "Create Notice", "/web/notices/add", "NOTICE", 191),
+                subMenu("NOTICES_LIST", "Manage Notices", "/web/notices", "NOTICE", 192),
+
+                superMenu("NOTIFICATIONS", "Notification Inbox", null, "fa-solid fa-bell", 200),
+                subMenu("NOTIFICATIONS_LIST", "My Notifications", "/web/notifications", "NOTIFICATIONS", 201),
+
+                superMenu("STUDENT_PORTAL", "Student Portal", "/web/student-portal", "fa-solid fa-user-graduate", 210),
+                superMenu("TEACHER_PORTAL", "Teacher Portal", "/web/teacher-portal", "fa-solid fa-chalkboard-user", 220)
         );
 
         for (MenuSeed seed : menuSeeds) {
@@ -196,15 +218,21 @@ public class MenuCreation {
                 "ATTENDANCE", "ATTENDANCE_ADD", "ATTENDANCE_LIST", "TIMETABLE", "TIMETABLE_ADD", "TIMETABLE_LIST",
                 "EXAMINATION", "EXAMINATIONS_ADD", "EXAMINATIONS_LIST",
                 "MARKS_ENTRY", "MARKS_ADD", "MARKS_LIST", "MARKS_VERIFICATION", "MARKS_VERIFICATION_LIST",
-                "RESULTS", "RESULTS_LIST");
+                "RESULTS", "RESULTS_LIST", "CERTIFICATE", "CERTIFICATES_ADD", "CERTIFICATES_LIST");
         List<String> academicWriteMenus = List.of(
                 "DEPARTMENTS_ADD", "FACULTIES_ADD", "PROGRAMS_ADD", "ACADEMIC_YEARS_ADD", "SEMESTERS_ADD",
                 "SECTIONS_ADD", "SUBJECTS_ADD", "PROGRAM_SUBJECTS_ADD", "STUDENTS_ADD", "STUDENT_ENROLLMENTS_ADD",
-                "ADMISSIONS_ADD", "EMPLOYEES_ADD", "ATTENDANCE_ADD", "TIMETABLE_ADD", "EXAMINATIONS_ADD", "MARKS_ADD");
+                "ADMISSIONS_ADD", "EMPLOYEES_ADD", "ATTENDANCE_ADD", "TIMETABLE_ADD", "EXAMINATIONS_ADD", "MARKS_ADD", "CERTIFICATES_ADD");
         List<String> systemAdminMenus = new ArrayList<>(allMenus);
         systemAdminMenus.removeAll(academicWriteMenus);
-        List<String> collegeAdminMenus = mergeMenus(List.of("DASHBOARD"), academicMenus);
-        List<String> principalMenus = mergeMenus(List.of("DASHBOARD"), academicMenus);
+        List<String> superAdminMenus = new ArrayList<>(allMenus);
+        superAdminMenus.removeAll(List.of("STUDENT_PORTAL", "TEACHER_PORTAL", "NOTIFICATIONS", "NOTIFICATIONS_LIST"));
+        List<String> operationsMenus = List.of("FEE_STRUCTURE", "FEE_STRUCTURES_ADD", "FEE_STRUCTURES_LIST",
+                "FEE_COLLECTION", "FEE_COLLECTIONS_ADD", "FEE_COLLECTIONS_LIST", "NOTICE", "NOTICES_ADD", "NOTICES_LIST");
+        systemAdminMenus.removeAll(operationsMenus);
+        systemAdminMenus.removeAll(List.of("NOTIFICATIONS", "NOTIFICATIONS_LIST", "STUDENT_PORTAL", "TEACHER_PORTAL"));
+        List<String> collegeAdminMenus = mergeMenus(mergeMenus(List.of("DASHBOARD"), academicMenus), operationsMenus);
+        List<String> principalMenus = mergeMenus(mergeMenus(List.of("DASHBOARD"), academicMenus), operationsMenus);
         List<String> teacherMenus = mergeMenus(List.of("DASHBOARD"), List.of(
                 "SECTION", "SECTIONS_LIST",
                 "SUBJECT", "SUBJECTS_LIST",
@@ -212,21 +240,22 @@ public class MenuCreation {
                 "STUDENT", "STUDENTS_LIST",
                 "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST", "EMPLOYEE", "EMPLOYEES_LIST",
                 "ATTENDANCE", "ATTENDANCE_LIST", "TIMETABLE", "TIMETABLE_LIST", "EXAMINATION", "EXAMINATIONS_LIST",
-                "MARKS_ENTRY", "MARKS_LIST", "RESULTS", "RESULTS_LIST"));
+                "MARKS_ENTRY", "MARKS_LIST", "RESULTS", "RESULTS_LIST", "TEACHER_PORTAL", "NOTIFICATIONS", "NOTIFICATIONS_LIST"));
         List<String> accountantMenus = mergeMenus(List.of("DASHBOARD"), List.of(
                 "ACADEMIC_YEAR", "ACADEMIC_YEARS_LIST",
                 "SEMESTER", "SEMESTERS_LIST",
                 "STUDENT", "STUDENTS_LIST",
-                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST"));
+                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST", "FEE_STRUCTURE", "FEE_STRUCTURES_LIST",
+                "FEE_COLLECTION", "FEE_COLLECTIONS_ADD", "FEE_COLLECTIONS_LIST"));
         List<String> librarianMenus = mergeMenus(List.of("DASHBOARD"), List.of(
                 "STUDENT", "STUDENTS_LIST",
                 "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST"));
-        List<String> studentMenus = List.of("DASHBOARD");
-        List<String> guardianMenus = studentMenus;
+        List<String> studentMenus = List.of("DASHBOARD", "STUDENT_PORTAL", "NOTIFICATIONS", "NOTIFICATIONS_LIST");
+        List<String> guardianMenus = List.of("DASHBOARD");
         List<String> staffMenus = mergeMenus(List.of("DASHBOARD"), List.of(
                 "STUDENT", "STUDENTS_LIST",
                 "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST", "EMPLOYEE", "EMPLOYEES_LIST", "ADMISSION", "ADMISSIONS_LIST"));
-        List<String> branchMenus = mergeMenus(List.of("DASHBOARD"), List.of(
+        List<String> branchMenus = mergeMenus(mergeMenus(List.of("DASHBOARD"), operationsMenus), List.of(
                 "DEPARTMENT", "DEPARTMENTS_ADD", "DEPARTMENTS_LIST",
                 "FACULTY", "FACULTIES_ADD", "FACULTIES_LIST",
                 "PROGRAM", "PROGRAMS_ADD", "PROGRAMS_LIST",
@@ -241,10 +270,10 @@ public class MenuCreation {
                 "ATTENDANCE", "ATTENDANCE_ADD", "ATTENDANCE_LIST", "TIMETABLE", "TIMETABLE_ADD", "TIMETABLE_LIST",
                 "EXAMINATION", "EXAMINATIONS_ADD", "EXAMINATIONS_LIST",
                 "MARKS_ENTRY", "MARKS_ADD", "MARKS_LIST", "MARKS_VERIFICATION", "MARKS_VERIFICATION_LIST",
-                "RESULTS", "RESULTS_LIST"));
+                "RESULTS", "RESULTS_LIST", "CERTIFICATE", "CERTIFICATES_ADD", "CERTIFICATES_LIST"));
 
         // The two platform administrator types need the complete menu catalog, including academics.
-        createTemplate(UserType.SUPER_ADMIN, "Super Admin Menu Template", allMenus, menus);
+        createTemplate(UserType.SUPER_ADMIN, "Super Admin Menu Template", superAdminMenus, menus);
         createTemplate(UserType.SYSTEM_ADMIN, "System Admin Menu Template", systemAdminMenus, menus);
         createTemplate(UserType.COLLEGE_ADMIN, "College Admin Menu Template", collegeAdminMenus, menus);
         createTemplate(UserType.COLLEGE_BRANCH, "College Branch Menu Template", branchMenus, menus);

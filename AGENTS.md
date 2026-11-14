@@ -50,7 +50,7 @@
 * **Role and Permission Management:** `RolePermissionPolicy` maps authenticated user types to explicit Spring Security permission authorities. `SecurityConfig` applies permission checks to system administration and academic routes, while academic write handlers enforce write permission at method level.
 * **Audit Log Management:** System administrators can search paginated `EntityChangeLog` records through `/api/v1/audit-logs` and `/web/audit-logs`, filtering by text, entity, entity ID, action, actor, and date range.
 
-### Phase 2: Essential College Operations (In progress)
+### Phase 2: Essential College Operations (Complete — implementation complete)
 1. Student Admission Management (Complete)
 2. Teacher and Staff Management (Complete)
 3. Student Attendance (Complete)
@@ -58,12 +58,12 @@
 5. Examination Management (Complete)
 6. Marks Entry and Verification (Complete)
 7. Result Processing and GPA Calculation (Complete)
-8. Student Certificate Management
-9. Fee Structure Management
-10. Student Fee Collection
-11. Receipt Generation
-12. Notice and Notification Management
-13. Student Portal & Teacher Portal
+8. Student Certificate Management (Complete)
+9. Fee Structure Management (Complete)
+10. Student Fee Collection (Complete)
+11. Receipt Generation (Complete)
+12. Notice and Notification Management (Complete)
+13. Student Portal & Teacher Portal (Complete)
 
 * **Student Admission Management:** Tenant-scoped application records and review transitions; accepting an application atomically creates the existing student and student-enrollment records. Applicant and decision changes are audited.
 * **Teacher and Staff Management:** Tenant-scoped employee profiles for teachers and staff, with department validation, status handling, soft deletion, and audit history. This manages employee profiles; login account provisioning remains part of User Management.
@@ -73,8 +73,13 @@
 * **Marks Entry:** Tenant-scoped marks are recorded once per examination and student enrollment. The service validates that the examination, enrollment, section, program, semester, subject, and student belong to the same tenant, and that the enrollment matches the examination section and program subject. Marks must be non-negative and cannot exceed the examination maximum.
 * **Marks Verification:** Marks move from `PENDING` to `VERIFIED` or `REJECTED`. Rejection requires a reason; verified marks cannot be edited. Updating rejected marks resets them to pending for review. Entry and verification transitions are audited.
 * **Result Processing and GPA:** Results can be processed for an active enrollment only after every active examination in its section and semester has verified marks. Results retain totals and a per-subject breakdown. The current GPA rule converts each subject percentage linearly to a 4.0 scale (`percentage / 25`) and weights the subject grade points by credit hours; all included subjects must have positive credit hours. This is an interim rule until the institution supplies a grading-band policy.
-* **Role access:** `SUPER_ADMIN` has read/write/verify/process access with server-validated tenant selection. `SYSTEM_ADMIN` has read-only access to marks and results. College administrators, principals, and branch administrators can enter and verify marks and process results. Teachers have read-only access. Route security, method checks, role permissions, and menu templates are configured for these modules.
-* **Verification status:** `mvnw.cmd -q -DskipTests compile` completed successfully after Marks Entry, Marks Verification, and Result Processing/GPA implementation. API runtime behavior, authenticated requests, and Postman runs have not been exercised.
+* **Student Certificate Management:** Certificates are issued for active student enrollments, have tenant-unique generated certificate numbers, prevent duplicate certificate types for one enrollment, retain revocation status and reason, and record audit history.
+* **Fee Structure Management:** Fee charges are scoped to a tenant, program, academic year, and semester. Amount, due date, description, and active status are maintained; academic references are checked server-side.
+* **Student Fee Collection and Receipts:** Cash, bank transfer, and cheque payments are recorded against a matching active enrollment and fee structure. Partial payments are supported; a row lock serializes collection against the fee structure and prevents overpayment. Each immutable payment record receives a tenant-prefixed receipt number and a printable JSP receipt. Online payment processing remains in Phase 3.
+* **Notice and Notification Management:** Authorized managers create and edit drafts, publish to all students and teachers or one of those audiences, and archive published notices. Publishing creates account-specific inbox notifications with read status and audit history.
+* **Student Portal and Teacher Portal:** Student accounts see their own results, recent attendance, active certificates, fee balances, receipts, and inbox notices. Teacher accounts see their own employee profile and assigned timetable plus inbox notices. The current student and employee records do not have user foreign keys, so portal identity is resolved by matching the authenticated account email to a profile email inside the authenticated tenant; no client profile ID is accepted. Student and teacher accounts must use the matching profile email.
+* **Role access:** `SUPER_ADMIN` has management read/write access with server-validated tenant selection. `SYSTEM_ADMIN` has read-only access to certificates as an academic feature and no fee, notice, or personal-portal access. College administrators, principals, and branch administrators can manage certificates, fees, collections, and notices. Accountants can read fee structures and collect payments. Student and teacher portals are restricted to their matching authenticated user types. Route security, method checks, role permissions, and menu templates are configured.
+* **Verification status:** `mvnw.cmd -q -DskipTests compile` completed successfully after these modules were added. `git diff --check` completed without whitespace errors. API runtime behavior, authenticated requests, database interaction, and Postman runs have not been exercised.
 
 ### Phase 3: Advanced Academic & Administrative Features (Pending)
 1. Library Management
