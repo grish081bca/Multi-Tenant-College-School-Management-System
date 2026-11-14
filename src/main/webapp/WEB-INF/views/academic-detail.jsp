@@ -11,9 +11,9 @@
                     value="${record.registrationNumber}"/></span></c:if></div>
         </div>
     </div>
-    <c:url var="recordListUrl" value="/web/${module}"><c:if test="${systemAdmin}"><c:param name="tenantId"
+    <c:url var="recordListUrl" value="/web/${module}"><c:if test="${platformAdmin}"><c:param name="tenantId"
                                                                                            value="${record.tenantId}"/></c:if></c:url><c:url
-        var="recordEditUrl" value="/web/${module}/${record.id}/edit"><c:if test="${systemAdmin}"><c:param
+        var="recordEditUrl" value="/web/${module}/${record.id}/edit"><c:if test="${platformAdmin}"><c:param
         name="tenantId" value="${record.tenantId}"/></c:if></c:url>
     <div class="tenant-hero-actions"><span class="status-pill status-${record.status}"><c:out
             value="${record.status}"/></span><a class="button secondary" href="${recordListUrl}"><i
@@ -27,7 +27,7 @@
             <p>Academic and student information</p></div>
     </div>
     <div class="tenant-detail-list">
-        <c:if test="${systemAdmin}">
+        <c:if test="${platformAdmin}">
             <div><span>Tenant</span><strong><c:out value="${record.tenantName}"/></strong></div>
         </c:if>
         <c:if test="${not empty record.name}">
@@ -69,6 +69,15 @@
     </c:if><c:if test="${not empty record.sectionName}">
         <div><span>Section</span><strong><c:out value="${record.sectionName}"/></strong></div>
     </c:if>
+        <c:if test="${not empty record.attendanceDate}"><div><span>Attendance date</span><strong><c:out value="${record.attendanceDate}"/></strong></div></c:if>
+        <c:if test="${not empty record.attendanceStatus}"><div><span>Attendance status</span><strong><c:out value="${record.attendanceStatus}"/></strong></div></c:if>
+        <c:if test="${not empty record.dayOfWeek}"><div><span>Day</span><strong><c:out value="${record.dayOfWeek}"/></strong></div></c:if>
+        <c:if test="${not empty record.startTime}"><div><span>Start time</span><strong><c:out value="${record.startTime}"/></strong></div></c:if>
+        <c:if test="${not empty record.endTime}"><div><span>End time</span><strong><c:out value="${record.endTime}"/></strong></div></c:if>
+        <c:if test="${not empty record.teacherName}"><div><span>Teacher</span><strong><c:out value="${record.teacherName}"/></strong></div></c:if>
+        <c:if test="${not empty record.room}"><div><span>Room</span><strong><c:out value="${record.room}"/></strong></div></c:if>
+        <c:if test="${not empty record.examDate}"><div><span>Exam date</span><strong><c:out value="${record.examDate}"/></strong></div></c:if>
+        <c:if test="${not empty record.maximumMarks}"><div><span>Maximum marks</span><strong><c:out value="${record.maximumMarks}"/></strong></div></c:if>
     </div>
 </section>
 <section class="tenant-info-panel tenant-audit-panel">

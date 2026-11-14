@@ -141,7 +141,19 @@ public class MenuCreation {
 
                 superMenu("EMPLOYEE", "Teachers and Staff", null, "fa-solid fa-person-chalkboard", 133),
                 subMenu("EMPLOYEES_ADD", "Add Employee", "/web/employees/add", "EMPLOYEE", 134),
-                subMenu("EMPLOYEES_LIST", "Employee Directory", "/web/employees", "EMPLOYEE", 135)
+                subMenu("EMPLOYEES_LIST", "Employee Directory", "/web/employees", "EMPLOYEE", 135),
+
+                superMenu("ATTENDANCE", "Student Attendance", null, "fa-solid fa-clipboard-user", 136),
+                subMenu("ATTENDANCE_ADD", "Record Attendance", "/web/attendance/add", "ATTENDANCE", 137),
+                subMenu("ATTENDANCE_LIST", "Attendance Records", "/web/attendance", "ATTENDANCE", 138),
+
+                superMenu("TIMETABLE", "Timetable", null, "fa-solid fa-calendar-days", 139),
+                subMenu("TIMETABLE_ADD", "Add Class Slot", "/web/timetable/add", "TIMETABLE", 140),
+                subMenu("TIMETABLE_LIST", "Class Schedule", "/web/timetable", "TIMETABLE", 141),
+
+                superMenu("EXAMINATION", "Examinations", null, "fa-solid fa-file-pen", 142),
+                subMenu("EXAMINATIONS_ADD", "Schedule Examination", "/web/examinations/add", "EXAMINATION", 143),
+                subMenu("EXAMINATIONS_LIST", "Examination Schedule", "/web/examinations", "EXAMINATION", 144)
         );
 
         for (MenuSeed seed : menuSeeds) {
@@ -170,11 +182,13 @@ public class MenuCreation {
                 "SEMESTER", "SEMESTERS_ADD", "SEMESTERS_LIST", "SECTION", "SECTIONS_ADD", "SECTIONS_LIST",
                 "SUBJECT", "SUBJECTS_ADD", "SUBJECTS_LIST", "PROGRAM_SUBJECT", "PROGRAM_SUBJECTS_ADD", "PROGRAM_SUBJECTS_LIST",
                 "STUDENT", "STUDENTS_ADD", "STUDENTS_LIST", "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_ADD", "STUDENT_ENROLLMENTS_LIST",
-                "ADMISSION", "ADMISSIONS_ADD", "ADMISSIONS_LIST", "EMPLOYEE", "EMPLOYEES_ADD", "EMPLOYEES_LIST");
+                "ADMISSION", "ADMISSIONS_ADD", "ADMISSIONS_LIST", "EMPLOYEE", "EMPLOYEES_ADD", "EMPLOYEES_LIST",
+                "ATTENDANCE", "ATTENDANCE_ADD", "ATTENDANCE_LIST", "TIMETABLE", "TIMETABLE_ADD", "TIMETABLE_LIST",
+                "EXAMINATION", "EXAMINATIONS_ADD", "EXAMINATIONS_LIST");
         List<String> academicWriteMenus = List.of(
                 "DEPARTMENTS_ADD", "FACULTIES_ADD", "PROGRAMS_ADD", "ACADEMIC_YEARS_ADD", "SEMESTERS_ADD",
                 "SECTIONS_ADD", "SUBJECTS_ADD", "PROGRAM_SUBJECTS_ADD", "STUDENTS_ADD", "STUDENT_ENROLLMENTS_ADD",
-                "ADMISSIONS_ADD", "EMPLOYEES_ADD");
+                "ADMISSIONS_ADD", "EMPLOYEES_ADD", "ATTENDANCE_ADD", "TIMETABLE_ADD", "EXAMINATIONS_ADD");
         List<String> systemAdminMenus = new ArrayList<>(allMenus);
         systemAdminMenus.removeAll(academicWriteMenus);
         List<String> collegeAdminMenus = mergeMenus(List.of("DASHBOARD"), academicMenus);
@@ -184,7 +198,8 @@ public class MenuCreation {
                 "SUBJECT", "SUBJECTS_LIST",
                 "PROGRAM_SUBJECT", "PROGRAM_SUBJECTS_LIST",
                 "STUDENT", "STUDENTS_LIST",
-                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST", "EMPLOYEE", "EMPLOYEES_LIST"));
+                "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_LIST", "EMPLOYEE", "EMPLOYEES_LIST",
+                "ATTENDANCE", "ATTENDANCE_LIST", "TIMETABLE", "TIMETABLE_LIST", "EXAMINATION", "EXAMINATIONS_LIST"));
         List<String> accountantMenus = mergeMenus(List.of("DASHBOARD"), List.of(
                 "ACADEMIC_YEAR", "ACADEMIC_YEARS_LIST",
                 "SEMESTER", "SEMESTERS_LIST",
@@ -209,7 +224,9 @@ public class MenuCreation {
                 "PROGRAM_SUBJECT", "PROGRAM_SUBJECTS_ADD", "PROGRAM_SUBJECTS_LIST",
                 "STUDENT", "STUDENTS_ADD", "STUDENTS_LIST",
                 "STUDENT_ENROLLMENT", "STUDENT_ENROLLMENTS_ADD", "STUDENT_ENROLLMENTS_LIST",
-                "ADMISSION", "ADMISSIONS_ADD", "ADMISSIONS_LIST", "EMPLOYEE", "EMPLOYEES_ADD", "EMPLOYEES_LIST"));
+                "ADMISSION", "ADMISSIONS_ADD", "ADMISSIONS_LIST", "EMPLOYEE", "EMPLOYEES_ADD", "EMPLOYEES_LIST",
+                "ATTENDANCE", "ATTENDANCE_ADD", "ATTENDANCE_LIST", "TIMETABLE", "TIMETABLE_ADD", "TIMETABLE_LIST",
+                "EXAMINATION", "EXAMINATIONS_ADD", "EXAMINATIONS_LIST"));
 
         // The two platform administrator types need the complete menu catalog, including academics.
         createTemplate(UserType.SUPER_ADMIN, "Super Admin Menu Template", allMenus, menus);

@@ -29,17 +29,21 @@ public final class RolePermissionPolicy {
         permissions.put(UserType.SUPER_ADMIN, superAdmin);
 
         Set<Permission> systemAdmin = EnumSet.allOf(Permission.class);
-        systemAdmin.removeAll(EnumSet.of(Permission.ACADEMIC_WRITE, Permission.ADMISSION_WRITE, Permission.EMPLOYEE_WRITE));
+        systemAdmin.removeAll(EnumSet.of(Permission.ACADEMIC_WRITE, Permission.ADMISSION_WRITE, Permission.EMPLOYEE_WRITE,
+                Permission.ATTENDANCE_WRITE, Permission.TIMETABLE_WRITE, Permission.EXAMINATION_WRITE));
         permissions.put(UserType.SYSTEM_ADMIN, systemAdmin);
 
         Set<Permission> collegeManagers = EnumSet.of(Permission.ACADEMIC_READ, Permission.ACADEMIC_WRITE,
-                Permission.ADMISSION_READ, Permission.ADMISSION_WRITE, Permission.EMPLOYEE_READ, Permission.EMPLOYEE_WRITE);
+                Permission.ADMISSION_READ, Permission.ADMISSION_WRITE, Permission.EMPLOYEE_READ, Permission.EMPLOYEE_WRITE,
+                Permission.ATTENDANCE_READ, Permission.ATTENDANCE_WRITE, Permission.TIMETABLE_READ, Permission.TIMETABLE_WRITE,
+                Permission.EXAMINATION_READ, Permission.EXAMINATION_WRITE);
         permissions.put(UserType.COLLEGE_ADMIN, collegeManagers);
         permissions.put(UserType.COLLEGE_BRANCH, collegeManagers);
         permissions.put(UserType.PRINCIPAL, collegeManagers);
 
         Set<Permission> academicReaders = EnumSet.of(Permission.ACADEMIC_READ);
-        permissions.put(UserType.TEACHER, EnumSet.of(Permission.ACADEMIC_READ, Permission.EMPLOYEE_READ));
+        permissions.put(UserType.TEACHER, EnumSet.of(Permission.ACADEMIC_READ, Permission.EMPLOYEE_READ,
+                Permission.ATTENDANCE_READ, Permission.TIMETABLE_READ, Permission.EXAMINATION_READ));
         permissions.put(UserType.ACCOUNTANT, academicReaders);
         permissions.put(UserType.LIBRARIAN, academicReaders);
         permissions.put(UserType.STAFF, EnumSet.of(Permission.ACADEMIC_READ, Permission.EMPLOYEE_READ, Permission.ADMISSION_READ));

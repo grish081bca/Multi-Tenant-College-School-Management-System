@@ -4,6 +4,7 @@ import com.college.erp.collegemanagementsystem.dto.AcademicRecordDTO;
 import com.college.erp.collegemanagementsystem.dto.PagablePage;
 import com.college.erp.collegemanagementsystem.entity.*;
 import com.college.erp.collegemanagementsystem.enums.EntityChangeAction;
+import com.college.erp.collegemanagementsystem.enums.EmployeeType;
 import com.college.erp.collegemanagementsystem.enums.Status;
 import com.college.erp.collegemanagementsystem.exception.ResourceNotFoundException;
 import com.college.erp.collegemanagementsystem.exception.ValidationException;
@@ -11,6 +12,7 @@ import com.college.erp.collegemanagementsystem.security.AuthenticatedUserPrincip
 import com.college.erp.collegemanagementsystem.service.AcademicManagementService;
 import com.college.erp.collegemanagementsystem.service.EntityChangeLogService;
 import com.college.erp.collegemanagementsystem.repository.AcademicRepositoryRegistry;
+import com.college.erp.collegemanagementsystem.repository.EmployeeRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 import jakarta.persistence.criteria.*;
@@ -35,11 +37,13 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
     private final EntityManager entityManager;
     private final EntityChangeLogService changeLogService;
     private final AcademicRepositoryRegistry repositories;
+    private final EmployeeRepository employees;
 
-    public AcademicManagementServiceImpl(EntityManager entityManager, EntityChangeLogService changeLogService, AcademicRepositoryRegistry repositories) {
+    public AcademicManagementServiceImpl(EntityManager entityManager, EntityChangeLogService changeLogService, AcademicRepositoryRegistry repositories, EmployeeRepository employees) {
         this.entityManager = entityManager;
         this.changeLogService = changeLogService;
         this.repositories = repositories;
+        this.employees = employees;
     }
 
     @Override @Transactional(readOnly = true)
@@ -96,6 +100,9 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
             case "program-subjects" -> Map.of("program", "program.name", "subjectCode", "subject.code", "subject", "subject.name", "semester", "semester.name");
             case "students" -> Map.of("registrationNumber", "registrationNumber", "firstName", "firstName", "middleName", "middleName", "lastName", "lastName", "email", "email", "phone", "phone", "address", "address");
             case "student-enrollments" -> Map.of("student", "student.registrationNumber", "program", "program.name", "academicYear", "academicYear.name", "semester", "semester.name", "section", "section.name");
+            case "attendance" -> Map.of("student", "enrollment.student.registrationNumber", "section", "enrollment.section.name", "attendanceDate", "attendanceDate", "attendanceStatus", "attendanceStatus");
+            case "timetable" -> Map.of("section", "section.name", "subject", "programSubject.subject.name", "teacher", "teacher.lastName", "day", "dayOfWeek", "room", "room");
+            case "examinations" -> Map.of("code", "code", "name", "name", "section", "section.name", "subject", "programSubject.subject.name", "examDate", "examDate");
             default -> Map.of();
         };
     }
@@ -115,6 +122,21 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
     public List<AcademicRecordDTO> options(String module, Long requestedTenantId) {
         String moduleKey = normalizeModule(module); Long currentTenantId = resolveTenantId(requestedTenantId, false);
         if (currentTenantId == null) return List.of();
+        if ("teachers".equals(moduleKey)) {
+            return employees.findAll((root, query, builder) -> builder.and(
+                            builder.equal(root.get("tenant").get("id"), currentTenantId),
+                            builder.equal(root.get("employeeType"), EmployeeType.TEACHER),
+                            builder.equal(root.get("status"), Status.ACTIVE),
+                            builder.isFalse(root.get("deleted"))), Sort.by(Sort.Direction.ASC, "lastName", "firstName"))
+                    .stream().map(employee -> {
+                        AcademicRecordDTO dto = new AcademicRecordDTO();
+                        dto.setId(employee.getId());
+                        dto.setTenantId(currentTenantId);
+                        dto.setCode(employee.getEmployeeNumber());
+                        dto.setName(employee.getFirstName() + " " + employee.getLastName());
+                        return dto;
+                    }).toList();
+        }
         Specification<Object> specification = (root, query, builder) -> {
             if (query.getResultType() != Long.class && query.getResultType() != long.class) { root.fetch("tenant", JoinType.LEFT); fetchAssociations(root, moduleKey); }
             return builder.equal(root.get("tenant").get("id"), currentTenantId);
@@ -141,8 +163,15 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
             ps.setStatus(targetStatus);
         } else if (entity instanceof TenantOwnedEntity owned) {
             if (id == null) owned.setTenant(tenant);
-            owned.setCode(required(request.getCode(), "Code"));
-            owned.setName(required(request.getName(), "Name"));
+            if ("attendance".equals(normalizeModule(module))) {
+                if (request.getEnrollmentId() == null || request.getAttendanceDate() == null)
+                    throw new ValidationException("Enrollment and attendance date are required.");
+                owned.setCode("ATT-" + request.getEnrollmentId() + "-" + request.getAttendanceDate());
+                owned.setName("Attendance " + request.getAttendanceDate() + " #" + request.getEnrollmentId());
+            } else {
+                owned.setCode(required(request.getCode(), "Code"));
+                owned.setName(required(request.getName(), "Name"));
+            }
             owned.setDescription(clean(request.getDescription()));
             owned.setStatus(targetStatus);
         } else if (entity instanceof Student student) {
@@ -157,6 +186,22 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
         } else if (entity instanceof StudentEnrollment enrollment) {
             if (id == null) enrollment.setTenant(tenant);
             enrollment.setStatus(targetStatus);
+        }
+        if (entity instanceof StudentAttendance attendance) {
+            attendance.setAttendanceDate(request.getAttendanceDate());
+            attendance.setAttendanceStatus(request.getAttendanceStatus());
+        }
+        if (entity instanceof TimetableSlot slot) {
+            slot.setDayOfWeek(parseDay(request.getDayOfWeek()));
+            slot.setStartTime(request.getStartTime());
+            slot.setEndTime(request.getEndTime());
+            slot.setRoom(clean(request.getRoom()));
+        }
+        if (entity instanceof Examination examination) {
+            examination.setExamDate(request.getExamDate());
+            examination.setStartTime(request.getStartTime());
+            examination.setEndTime(request.getEndTime());
+            examination.setMaximumMarks(request.getMaximumMarks());
         }
         validateInput(module, request);
         assignRelationships(module, entity, request, id, selectedTenantId);
@@ -241,6 +286,33 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
             enrollmentKey.put("academicYear", year); enrollmentKey.put("semester", semester);
             if (hasDuplicate(StudentEnrollment.class, id, enrollmentKey, tenant)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Student already has an enrollment for this program, academic year and semester.");
         }
+        if (entity instanceof StudentAttendance attendance) {
+            StudentEnrollment enrollment = ref(StudentEnrollment.class, dto.getEnrollmentId(), tenant, "Student enrollment");
+            if (enrollment.getStatus() != Status.ACTIVE) throw new ValidationException("Attendance can only be recorded for an active enrollment.");
+            attendance.setEnrollment(enrollment);
+            Map<String, Object> attendanceKey = new LinkedHashMap<>();
+            attendanceKey.put("enrollment", enrollment);
+            attendanceKey.put("attendanceDate", dto.getAttendanceDate());
+            if (hasDuplicate(StudentAttendance.class, id, attendanceKey, tenant))
+                throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Attendance is already recorded for this student and date.");
+        }
+        if (entity instanceof TimetableSlot slot) {
+            Section section = ref(Section.class, dto.getSectionId(), tenant, "Section");
+            ProgramSubject subject = ref(ProgramSubject.class, dto.getProgramSubjectId(), tenant, "Program subject");
+            validateSectionSubject(section, subject);
+            slot.setSection(section);
+            slot.setProgramSubject(subject);
+            slot.setTeacher(resolveTeacher(dto.getTeacherId(), tenant));
+            if (slot.getStatus() == Status.ACTIVE) validateTimetableOverlap(slot, tenant);
+        }
+        if (entity instanceof Examination examination) {
+            Section section = ref(Section.class, dto.getSectionId(), tenant, "Section");
+            ProgramSubject subject = ref(ProgramSubject.class, dto.getProgramSubjectId(), tenant, "Program subject");
+            validateSectionSubject(section, subject);
+            examination.setSection(section);
+            examination.setProgramSubject(subject);
+            if (examination.getStatus() == Status.ACTIVE) validateExaminationOverlap(examination, tenant);
+        }
     }
 
     private <T> T ref(Class<T> type, Long id, long tenant, String label) {
@@ -248,6 +320,77 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
         T entity = type.cast(repositories.findByTypeAndTenantId(type, id, tenant));
         if (entity == null) throw new ValidationException(label + " is invalid for this tenant.");
         return entity;
+    }
+
+    private java.time.DayOfWeek parseDay(String value) {
+        try { return value == null ? null : java.time.DayOfWeek.valueOf(value); }
+        catch (IllegalArgumentException ex) { throw new ValidationException("Day of week is invalid."); }
+    }
+
+    private void validateSectionSubject(Section section, ProgramSubject subject) {
+        if (section.getStatus() != Status.ACTIVE || subject.getStatus() != Status.ACTIVE)
+            throw new ValidationException("Section and program subject must be active.");
+        if (!Objects.equals(section.getProgram().getId(), subject.getProgram().getId())
+                || !Objects.equals(section.getSemester().getId(), subject.getSemester().getId()))
+            throw new ValidationException("Program subject must match the section's program and semester.");
+    }
+
+    private Employee resolveTeacher(Long teacherId, long tenantId) {
+        if (teacherId == null) return null;
+        Employee teacher = employees.findByIdAndTenantIdAndDeletedFalse(teacherId, tenantId)
+                .orElseThrow(() -> new ValidationException("Teacher is invalid for this tenant."));
+        if (teacher.getEmployeeType() != EmployeeType.TEACHER || teacher.getStatus() != Status.ACTIVE)
+            throw new ValidationException("Selected teacher must be an active teacher in this tenant.");
+        return teacher;
+    }
+
+    private void validateTimetableOverlap(TimetableSlot slot, long tenantId) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Long> query = cb.createQuery(Long.class);
+        Root<TimetableSlot> root = query.from(TimetableSlot.class);
+        List<Predicate> scope = new ArrayList<>();
+        scope.add(cb.equal(root.get("tenant").get("id"), tenantId));
+        scope.add(cb.equal(root.get("status"), Status.ACTIVE));
+        scope.add(cb.equal(root.get("dayOfWeek"), slot.getDayOfWeek()));
+        scope.add(cb.lessThan(root.get("startTime"), slot.getEndTime()));
+        scope.add(cb.greaterThan(root.get("endTime"), slot.getStartTime()));
+        scope.add(cb.notEqual(root.get("id"), slot.getId() == null ? -1L : slot.getId()));
+        List<Predicate> sectionConflict = new ArrayList<>(scope);
+        sectionConflict.add(cb.equal(root.get("section").get("id"), slot.getSection().getId()));
+        query.select(cb.count(root)).where(sectionConflict.toArray(Predicate[]::new));
+        if (entityManager.createQuery(query).getSingleResult() > 0)
+            throw new ValidationException("This section already has a class during the selected time.");
+        if (slot.getTeacher() != null) {
+            List<Predicate> teacherConflict = new ArrayList<>(scope);
+            teacherConflict.add(cb.equal(root.get("teacher").get("id"), slot.getTeacher().getId()));
+            query.select(cb.count(root)).where(teacherConflict.toArray(Predicate[]::new));
+            if (entityManager.createQuery(query).getSingleResult() > 0)
+                throw new ValidationException("This teacher already has a class during the selected time.");
+        }
+        if (slot.getRoom() != null && !slot.getRoom().isBlank()) {
+            List<Predicate> roomConflict = new ArrayList<>(scope);
+            roomConflict.add(cb.equal(cb.lower(root.get("room")), slot.getRoom().trim().toLowerCase(Locale.ROOT)));
+            query.select(cb.count(root)).where(roomConflict.toArray(Predicate[]::new));
+            if (entityManager.createQuery(query).getSingleResult() > 0)
+                throw new ValidationException("This room is already assigned during the selected time.");
+        }
+    }
+
+    private void validateExaminationOverlap(Examination exam, long tenantId) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Long> query = cb.createQuery(Long.class);
+        Root<Examination> root = query.from(Examination.class);
+        List<Predicate> scope = new ArrayList<>();
+        scope.add(cb.equal(root.get("tenant").get("id"), tenantId));
+        scope.add(cb.equal(root.get("status"), Status.ACTIVE));
+        scope.add(cb.equal(root.get("section").get("id"), exam.getSection().getId()));
+        scope.add(cb.equal(root.get("examDate"), exam.getExamDate()));
+        scope.add(cb.lessThan(root.get("startTime"), exam.getEndTime()));
+        scope.add(cb.greaterThan(root.get("endTime"), exam.getStartTime()));
+        scope.add(cb.notEqual(root.get("id"), exam.getId() == null ? -1L : exam.getId()));
+        query.select(cb.count(root)).where(scope.toArray(Predicate[]::new));
+        if (entityManager.createQuery(query).getSingleResult() > 0)
+            throw new ValidationException("This section already has an examination during the selected time.");
     }
 
     private Object scopedEntity(String module, Long id, long tenantId) {
@@ -278,7 +421,9 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
             case "departments" -> Department.class; case "faculties" -> Faculty.class; case "programs" -> Program.class;
             case "academic-years" -> AcademicYear.class; case "semesters" -> Semester.class; case "sections" -> Section.class;
             case "subjects" -> Subject.class; case "program-subjects" -> ProgramSubject.class; case "students" -> Student.class;
-            case "student-enrollments" -> StudentEnrollment.class; default -> throw new IllegalArgumentException("Unknown academic module.");
+            case "student-enrollments" -> StudentEnrollment.class; case "attendance" -> StudentAttendance.class;
+            case "timetable" -> TimetableSlot.class; case "examinations" -> Examination.class;
+            default -> throw new IllegalArgumentException("Unknown academic module.");
         };
     }
     private String normalizeModule(String module) { return module == null ? "" : module.trim().toLowerCase(Locale.ROOT); }
@@ -295,6 +440,9 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
             case "program-subjects" -> List.of("program.name", "subject.code", "subject.name", "semester.name", "status");
             case "subjects" -> List.of("code", "name", "creditHours", "description", "status");
             case "student-enrollments" -> List.of("student.registrationNumber", "student.firstName", "student.middleName", "student.lastName", "program.name", "academicYear.name", "semester.name", "section.name", "status");
+            case "attendance" -> List.of("enrollment.student.registrationNumber", "enrollment.student.firstName", "enrollment.student.lastName", "enrollment.section.name", "attendanceDate", "attendanceStatus", "status");
+            case "timetable" -> List.of("code", "name", "section.name", "programSubject.subject.name", "teacher.lastName", "dayOfWeek", "room", "status");
+            case "examinations" -> List.of("code", "name", "section.name", "programSubject.subject.name", "examDate", "status");
             default -> List.of("code", "name", "description", "status");
         };
     }
@@ -320,6 +468,27 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
         }
         if ("semesters".equals(module) && dto.getSequenceNumber() != null && dto.getSequenceNumber() < 1) throw new ValidationException("Sequence number must be greater than zero.");
         if ("subjects".equals(module) && dto.getCreditHours() != null && (dto.getCreditHours().signum() < 0 || dto.getCreditHours().compareTo(new BigDecimal("999.99")) > 0 || dto.getCreditHours().scale() > 2)) throw new ValidationException("Credit hours must be between 0 and 999.99 with at most two decimal places.");
+        if ("attendance".equals(module)) {
+            if (dto.getEnrollmentId() == null || dto.getAttendanceDate() == null || dto.getAttendanceStatus() == null)
+                throw new ValidationException("Enrollment, attendance date, and attendance status are required.");
+            if (dto.getAttendanceDate().isAfter(LocalDate.now())) throw new ValidationException("Attendance date cannot be in the future.");
+        }
+        if ("timetable".equals(module)) {
+            if (dto.getSectionId() == null || dto.getProgramSubjectId() == null || dto.getDayOfWeek() == null
+                    || dto.getStartTime() == null || dto.getEndTime() == null)
+                throw new ValidationException("Section, subject, day, start time, and end time are required.");
+            if (!dto.getEndTime().isAfter(dto.getStartTime())) throw new ValidationException("End time must be after start time.");
+            checkLength(dto.getRoom(), 100, "Room");
+        }
+        if ("examinations".equals(module)) {
+            if (dto.getSectionId() == null || dto.getProgramSubjectId() == null || dto.getExamDate() == null
+                    || dto.getStartTime() == null || dto.getEndTime() == null || dto.getMaximumMarks() == null)
+                throw new ValidationException("Section, subject, exam date, start time, end time, and maximum marks are required.");
+            if (!dto.getEndTime().isAfter(dto.getStartTime())) throw new ValidationException("End time must be after start time.");
+            if (dto.getMaximumMarks().signum() <= 0 || dto.getMaximumMarks().scale() > 2
+                    || dto.getMaximumMarks().compareTo(new BigDecimal("99999.99")) > 0)
+                throw new ValidationException("Maximum marks must be greater than zero and no more than 99999.99 with at most two decimal places.");
+        }
     }
 
     private void checkLength(String value, int max, String label) {
@@ -329,7 +498,9 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
     private void validateUnique(String module, Long id, Object entity, long tenantId) {
         if (entity instanceof TenantOwnedEntity owned) {
             if (!(entity instanceof ProgramSubject) && hasDuplicate(entity.getClass(), id, Map.of("code", owned.getCode()), tenantId)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Code already exists in this tenant.");
-            if (!(entity instanceof Section) && !(entity instanceof ProgramSubject) && hasDuplicate(entity.getClass(), id, Map.of("name", owned.getName()), tenantId)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Name already exists in this tenant.");
+            if (!(entity instanceof Section) && !(entity instanceof ProgramSubject)
+                    && !(entity instanceof TimetableSlot) && !(entity instanceof Examination)
+                    && hasDuplicate(entity.getClass(), id, Map.of("name", owned.getName()), tenantId)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Name already exists in this tenant.");
             if (entity instanceof Section section) {
                 Map<String, Object> sectionKey = new LinkedHashMap<>(); sectionKey.put("program", section.getProgram()); sectionKey.put("academicYear", section.getAcademicYear()); sectionKey.put("semester", section.getSemester()); sectionKey.put("name", section.getName());
                 if (hasDuplicate(Section.class, id, sectionKey, tenantId)) throw new com.college.erp.collegemanagementsystem.exception.DuplicateResourceException("Section name already exists for this program, academic year and semester.");
@@ -383,6 +554,9 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
             case "sections" -> { root.fetch("program", JoinType.LEFT); root.fetch("academicYear", JoinType.LEFT); root.fetch("semester", JoinType.LEFT); }
             case "program-subjects" -> { root.fetch("program", JoinType.LEFT); root.fetch("subject", JoinType.LEFT); root.fetch("semester", JoinType.LEFT); }
             case "student-enrollments" -> { root.fetch("student", JoinType.LEFT); root.fetch("program", JoinType.LEFT); root.fetch("academicYear", JoinType.LEFT); root.fetch("semester", JoinType.LEFT); root.fetch("section", JoinType.LEFT); }
+            case "attendance" -> { var enrollment = root.fetch("enrollment", JoinType.LEFT); enrollment.fetch("student", JoinType.LEFT); enrollment.fetch("section", JoinType.LEFT); }
+            case "timetable" -> { root.fetch("section", JoinType.LEFT); root.fetch("programSubject", JoinType.LEFT).fetch("subject", JoinType.LEFT); root.fetch("teacher", JoinType.LEFT); }
+            case "examinations" -> { root.fetch("section", JoinType.LEFT); root.fetch("programSubject", JoinType.LEFT).fetch("subject", JoinType.LEFT); }
             default -> { }
         }
     }
@@ -399,6 +573,32 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
             if (x instanceof Section y) { d.setProgramId(y.getProgram().getId()); d.setProgramName(y.getProgram().getName()); d.setAcademicYearId(y.getAcademicYear().getId()); d.setAcademicYearName(y.getAcademicYear().getName()); d.setSemesterId(y.getSemester().getId()); d.setSemesterName(y.getSemester().getName()); }
             if (x instanceof ProgramSubject y) { d.setCode(y.getSubject().getCode()); d.setName(y.getSubject().getName()); d.setProgramId(y.getProgram().getId()); d.setProgramName(y.getProgram().getName()); d.setSubjectId(y.getSubject().getId()); d.setSubjectName(y.getSubject().getName()); d.setSemesterId(y.getSemester().getId()); d.setSemesterName(y.getSemester().getName()); }
             if (x instanceof ProgramSubject y) { d.setProgramId(y.getProgram().getId()); d.setProgramName(y.getProgram().getName()); d.setSubjectId(y.getSubject().getId()); d.setSubjectName(y.getSubject().getName()); d.setSemesterId(y.getSemester().getId()); d.setSemesterName(y.getSemester().getName()); }
+            if (x instanceof StudentAttendance y) {
+                d.setEnrollmentId(y.getEnrollment().getId());
+                d.setStudentId(y.getEnrollment().getStudent().getId());
+                d.setStudentName(y.getEnrollment().getStudent().getFirstName() + " " + y.getEnrollment().getStudent().getLastName());
+                d.setRegistrationNumber(y.getEnrollment().getStudent().getRegistrationNumber());
+                d.setSectionId(y.getEnrollment().getSection().getId());
+                d.setSectionName(y.getEnrollment().getSection().getName());
+                d.setAttendanceDate(y.getAttendanceDate()); d.setAttendanceStatus(y.getAttendanceStatus());
+            }
+            if (x instanceof TimetableSlot y) {
+                d.setSectionId(y.getSection().getId()); d.setSectionName(y.getSection().getName());
+                d.setProgramId(y.getProgramSubject().getProgram().getId()); d.setProgramName(y.getProgramSubject().getProgram().getName());
+                d.setSemesterId(y.getProgramSubject().getSemester().getId()); d.setSemesterName(y.getProgramSubject().getSemester().getName());
+                d.setProgramSubjectId(y.getProgramSubject().getId()); d.setSubjectId(y.getProgramSubject().getSubject().getId());
+                d.setSubjectName(y.getProgramSubject().getSubject().getName()); d.setDayOfWeek(y.getDayOfWeek().name());
+                d.setStartTime(y.getStartTime()); d.setEndTime(y.getEndTime()); d.setRoom(y.getRoom());
+                if (y.getTeacher() != null) { d.setTeacherId(y.getTeacher().getId()); d.setTeacherName(y.getTeacher().getFirstName() + " " + y.getTeacher().getLastName()); }
+            }
+            if (x instanceof Examination y) {
+                d.setSectionId(y.getSection().getId()); d.setSectionName(y.getSection().getName());
+                d.setProgramId(y.getProgramSubject().getProgram().getId()); d.setProgramName(y.getProgramSubject().getProgram().getName());
+                d.setSemesterId(y.getProgramSubject().getSemester().getId()); d.setSemesterName(y.getProgramSubject().getSemester().getName());
+                d.setProgramSubjectId(y.getProgramSubject().getId()); d.setSubjectId(y.getProgramSubject().getSubject().getId());
+                d.setSubjectName(y.getProgramSubject().getSubject().getName()); d.setExamDate(y.getExamDate());
+                d.setStartTime(y.getStartTime()); d.setEndTime(y.getEndTime()); d.setMaximumMarks(y.getMaximumMarks());
+            }
         } else if (entity instanceof Student x) {
             d.setTenantId(x.getTenant().getId()); d.setTenantName(x.getTenant().getTenantName());
             d.setId(x.getId()); d.setRegistrationNumber(x.getRegistrationNumber()); d.setFirstName(x.getFirstName()); d.setMiddleName(x.getMiddleName()); d.setLastName(x.getLastName()); d.setEmail(x.getEmail()); d.setPhone(x.getPhone()); d.setDateOfBirth(x.getDateOfBirth()); d.setAddress(x.getAddress()); d.setStatus(x.getStatus()); d.setName(x.getFirstName() + " " + x.getLastName());
@@ -418,6 +618,9 @@ public class AcademicManagementServiceImpl implements AcademicManagementService 
     }
     private Map<String,Object> values(AcademicRecordDTO d) {
         Map<String,Object> values = new LinkedHashMap<>();
-        values.put("code",d.getCode()); values.put("name",d.getName()); values.put("description",d.getDescription()); values.put("status",d.getStatus()); values.put("facultyId",d.getFacultyId()); values.put("departmentId",d.getDepartmentId()); values.put("programId",d.getProgramId()); values.put("academicYearId",d.getAcademicYearId()); values.put("semesterId",d.getSemesterId()); values.put("subjectId",d.getSubjectId()); values.put("sectionId",d.getSectionId()); values.put("studentId",d.getStudentId()); values.put("registrationNumber",d.getRegistrationNumber()); values.put("firstName",d.getFirstName()); values.put("middleName",d.getMiddleName()); values.put("lastName",d.getLastName()); values.put("email",d.getEmail()); values.put("phone",d.getPhone()); values.put("creditHours",d.getCreditHours()); values.put("sequenceNumber",d.getSequenceNumber()); return values;
+        values.put("code",d.getCode()); values.put("name",d.getName()); values.put("description",d.getDescription()); values.put("status",d.getStatus()); values.put("facultyId",d.getFacultyId()); values.put("departmentId",d.getDepartmentId()); values.put("programId",d.getProgramId()); values.put("academicYearId",d.getAcademicYearId()); values.put("semesterId",d.getSemesterId()); values.put("subjectId",d.getSubjectId()); values.put("sectionId",d.getSectionId()); values.put("studentId",d.getStudentId()); values.put("registrationNumber",d.getRegistrationNumber()); values.put("firstName",d.getFirstName()); values.put("middleName",d.getMiddleName()); values.put("lastName",d.getLastName()); values.put("email",d.getEmail()); values.put("phone",d.getPhone()); values.put("creditHours",d.getCreditHours()); values.put("sequenceNumber",d.getSequenceNumber());
+        values.put("enrollmentId", d.getEnrollmentId()); values.put("attendanceDate", d.getAttendanceDate()); values.put("attendanceStatus", d.getAttendanceStatus());
+        values.put("programSubjectId", d.getProgramSubjectId()); values.put("dayOfWeek", d.getDayOfWeek()); values.put("startTime", d.getStartTime()); values.put("endTime", d.getEndTime()); values.put("room", d.getRoom()); values.put("teacherId", d.getTeacherId());
+        values.put("examDate", d.getExamDate()); values.put("maximumMarks", d.getMaximumMarks()); return values;
     }
 }

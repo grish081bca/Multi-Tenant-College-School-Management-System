@@ -51,6 +51,21 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/audit-logs/**", "/web/audit-logs/**").hasAuthority("PERMISSION_AUDIT_LOG_READ")
                         .requestMatchers("/api/v1/admissions/**", "/web/admissions/**").hasAuthority("PERMISSION_ADMISSION_READ")
                         .requestMatchers("/api/v1/employees/**", "/web/employees/**").hasAuthority("PERMISSION_EMPLOYEE_READ")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/attendance/**", "/web/attendance/**").hasAuthority("PERMISSION_ATTENDANCE_WRITE")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/attendance/**").hasAuthority("PERMISSION_ATTENDANCE_WRITE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/attendance/**").hasAuthority("PERMISSION_ATTENDANCE_WRITE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/attendance/**").hasAuthority("PERMISSION_ATTENDANCE_WRITE")
+                        .requestMatchers("/api/v1/attendance/**", "/web/attendance/**").hasAuthority("PERMISSION_ATTENDANCE_READ")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/timetable/**", "/web/timetable/**").hasAuthority("PERMISSION_TIMETABLE_WRITE")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/timetable/**").hasAuthority("PERMISSION_TIMETABLE_WRITE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/timetable/**").hasAuthority("PERMISSION_TIMETABLE_WRITE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/timetable/**").hasAuthority("PERMISSION_TIMETABLE_WRITE")
+                        .requestMatchers("/api/v1/timetable/**", "/web/timetable/**").hasAuthority("PERMISSION_TIMETABLE_READ")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/examinations/**", "/web/examinations/**").hasAuthority("PERMISSION_EXAMINATION_WRITE")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/examinations/**").hasAuthority("PERMISSION_EXAMINATION_WRITE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/examinations/**").hasAuthority("PERMISSION_EXAMINATION_WRITE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/examinations/**").hasAuthority("PERMISSION_EXAMINATION_WRITE")
+                        .requestMatchers("/api/v1/examinations/**", "/web/examinations/**").hasAuthority("PERMISSION_EXAMINATION_READ")
                         .requestMatchers("/api/v1/tenants/**", "/web/tenants/**", "/web/tenant-branches/**",
                                 "/api/v1/users/**", "/web/users/**", "/api/v1/user-templates/**", "/web/user-templates/**",
                                 "/api/v1/menus/**", "/web/menus/**", "/api/v1/menu-templates/**", "/web/menu-templates/**",

@@ -18,14 +18,20 @@ public class AcademicRepositoryRegistry {
     public AcademicRepositoryRegistry(DepartmentRepository departments, FacultyRepository faculties, ProgramRepository programs,
                                      AcademicYearRepository academicYears, SemesterRepository semesters, SectionRepository sections,
                                      SubjectRepository subjects, ProgramSubjectRepository programSubjects, StudentRepository students,
-                                     StudentEnrollmentRepository enrollments) {
-        repositories = Map.of("departments", departments, "faculties", faculties, "programs", programs,
-                "academic-years", academicYears, "semesters", semesters, "sections", sections, "subjects", subjects,
-                "program-subjects", programSubjects, "students", students, "student-enrollments", enrollments);
-        repositoriesByType = Map.of(Department.class, departments, Faculty.class, faculties, Program.class, programs,
-                AcademicYear.class, academicYears, Semester.class, semesters, Section.class, sections,
-                Subject.class, subjects, ProgramSubject.class, programSubjects, Student.class, students,
-                StudentEnrollment.class, enrollments);
+                                     StudentEnrollmentRepository enrollments, StudentAttendanceRepository attendance,
+                                     TimetableSlotRepository timetable, ExaminationRepository examinations) {
+        repositories = Map.ofEntries(Map.entry("departments", departments), Map.entry("faculties", faculties),
+                Map.entry("programs", programs), Map.entry("academic-years", academicYears),
+                Map.entry("semesters", semesters), Map.entry("sections", sections), Map.entry("subjects", subjects),
+                Map.entry("program-subjects", programSubjects), Map.entry("students", students),
+                Map.entry("student-enrollments", enrollments), Map.entry("attendance", attendance),
+                Map.entry("timetable", timetable), Map.entry("examinations", examinations));
+        repositoriesByType = Map.ofEntries(Map.entry(Department.class, departments), Map.entry(Faculty.class, faculties),
+                Map.entry(Program.class, programs), Map.entry(AcademicYear.class, academicYears),
+                Map.entry(Semester.class, semesters), Map.entry(Section.class, sections), Map.entry(Subject.class, subjects),
+                Map.entry(ProgramSubject.class, programSubjects), Map.entry(Student.class, students),
+                Map.entry(StudentEnrollment.class, enrollments), Map.entry(StudentAttendance.class, attendance),
+                Map.entry(TimetableSlot.class, timetable), Map.entry(Examination.class, examinations));
     }
     @SuppressWarnings({"rawtypes", "unchecked"})
     public Object findByIdAndTenantId(String module, Long id, Long tenantId) { return ((TenantScopedRepository) repository(module)).findByIdAndTenant_Id(id, tenantId).orElse(null); }

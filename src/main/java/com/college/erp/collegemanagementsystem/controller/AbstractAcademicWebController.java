@@ -2,6 +2,7 @@ package com.college.erp.collegemanagementsystem.controller;
 
 import com.college.erp.collegemanagementsystem.dto.AcademicRecordDTO;
 import com.college.erp.collegemanagementsystem.enums.Status;
+import com.college.erp.collegemanagementsystem.enums.AttendanceStatus;
 import com.college.erp.collegemanagementsystem.service.AcademicManagementService;
 import com.college.erp.collegemanagementsystem.service.AcademicModuleService;
 import com.college.erp.collegemanagementsystem.service.EntityChangeLogService;
@@ -31,7 +32,7 @@ public abstract class AbstractAcademicWebController {
     }
     protected abstract String module();
     private String base() { return "/web/" + module(); }
-    private String title() { return switch (module()) { case "departments" -> "Department"; case "faculties" -> "Faculty"; case "programs" -> "Program"; case "academic-years" -> "Academic Year"; case "semesters" -> "Semester"; case "sections" -> "Section"; case "subjects" -> "Subject"; case "program-subjects" -> "Program Subject"; case "students" -> "Student"; default -> "Student Enrollment"; }; }
+    private String title() { return switch (module()) { case "departments" -> "Department"; case "faculties" -> "Faculty"; case "programs" -> "Program"; case "academic-years" -> "Academic Year"; case "semesters" -> "Semester"; case "sections" -> "Section"; case "subjects" -> "Subject"; case "program-subjects" -> "Program Subject"; case "students" -> "Student"; case "attendance" -> "Student Attendance"; case "timetable" -> "Timetable"; case "examinations" -> "Examination"; default -> "Student Enrollment"; }; }
     private String viewPrefix() { return module(); }
 
     @GetMapping
@@ -47,7 +48,7 @@ public abstract class AbstractAcademicWebController {
         Long tenantId = parseLong(parameters.get("tenantId"));
         model.addAttribute("page", service.search(q, filters, status, page, size, tenantId));
         model.addAttribute("module", module()); model.addAttribute("moduleTitle", title());
-        model.addAttribute("q", q); model.addAttribute("selectedStatus", status); model.addAttribute("statuses", Status.values());
+        model.addAttribute("q", q); model.addAttribute("selectedStatus", status); model.addAttribute("statuses", Status.values()); model.addAttribute("attendanceStatuses", AttendanceStatus.values());
         model.addAttribute("platformAdmin", isPlatformAdmin()); model.addAttribute("selectedTenantId", tenantId);
         model.addAttribute("canManageAcademic", canManageAcademic());
         if (isPlatformAdmin()) model.addAttribute("tenants", tenants.getAllTenants());
@@ -91,7 +92,7 @@ public abstract class AbstractAcademicWebController {
     public String view(@PathVariable Long id, @RequestParam(required = false) Long tenantId, Model model, RedirectAttributes flash) {
         try {
             AcademicRecordDTO record = service.get(id, tenantId); model.addAttribute("record", record); model.addAttribute("module", module()); model.addAttribute("moduleTitle", title()); model.addAttribute("selectedTenantId", record.getTenantId()); model.addAttribute("platformAdmin", isPlatformAdmin());
-            model.addAttribute("canManageAcademic", canManageAcademic());
+            model.addAttribute("canManageAcademic", canManageAcademic()); model.addAttribute("attendanceStatuses", AttendanceStatus.values());
             model.addAttribute("changeLogs", changeLogs.getRecentChanges(entityName(), id)); return viewPrefix() + "-detail";
         } catch (Exception ex) { flash.addFlashAttribute("error", message(ex)); return redirectList(tenantId); }
     }
@@ -118,6 +119,7 @@ public abstract class AbstractAcademicWebController {
         record.setTenantId(tenantId);
         model.addAttribute("record", record); model.addAttribute("module", module()); model.addAttribute("moduleTitle", title());
         model.addAttribute("statuses", Status.values()); model.addAttribute("today", java.time.LocalDate.now());
+        model.addAttribute("daysOfWeek", java.time.DayOfWeek.values());
         model.addAttribute("platformAdmin", isPlatformAdmin()); model.addAttribute("selectedTenantId", tenantId);
         if (isPlatformAdmin()) model.addAttribute("tenants", tenants.getAllTenants());
         switch (module()) {
@@ -126,6 +128,9 @@ public abstract class AbstractAcademicWebController {
             case "sections" -> { model.addAttribute("programs", workflow.options("programs", tenantId)); model.addAttribute("academicYears", workflow.options("academic-years", tenantId)); model.addAttribute("semesters", workflow.options("semesters", tenantId)); }
             case "program-subjects" -> { model.addAttribute("programs", workflow.options("programs", tenantId)); model.addAttribute("semesters", workflow.options("semesters", tenantId)); model.addAttribute("subjects", workflow.options("subjects", tenantId)); }
             case "student-enrollments" -> { model.addAttribute("students", workflow.options("students", tenantId)); model.addAttribute("programs", workflow.options("programs", tenantId)); model.addAttribute("academicYears", workflow.options("academic-years", tenantId)); model.addAttribute("semesters", workflow.options("semesters", tenantId)); model.addAttribute("sections", workflow.options("sections", tenantId)); }
+            case "attendance" -> model.addAttribute("enrollments", workflow.options("student-enrollments", tenantId));
+            case "timetable" -> { model.addAttribute("sections", workflow.options("sections", tenantId)); model.addAttribute("programSubjects", workflow.options("program-subjects", tenantId)); model.addAttribute("teachers", workflow.options("teachers", tenantId)); }
+            case "examinations" -> { model.addAttribute("sections", workflow.options("sections", tenantId)); model.addAttribute("programSubjects", workflow.options("program-subjects", tenantId)); }
             default -> { }
         }
     }
@@ -141,6 +146,9 @@ public abstract class AbstractAcademicWebController {
             case "subjects" -> "code:Code,name:Name,creditHours:Credit hours,description:Description";
             case "program-subjects" -> "program:Program,subjectCode:Subject code,subject:Subject,semester:Semester";
             case "students" -> "registrationNumber:Registration number,firstName:First name,middleName:Middle name,lastName:Last name,email:Email,phone:Phone,dateOfBirth:Date of birth:date,address:Address";
+            case "attendance" -> "student:Student registration,section:Section,attendanceDate:Date:date,attendanceStatus:Attendance status";
+            case "timetable" -> "section:Section,subject:Subject,teacher:Teacher,day:Day,room:Room";
+            case "examinations" -> "code:Code,name:Name,section:Section,subject:Subject,examDate:Exam date:date";
             default -> "student:Student registration,program:Program,academicYear:Academic year,semester:Semester,section:Section";
         };
         List<Map<String, String>> result = new ArrayList<>();
@@ -156,7 +164,7 @@ public abstract class AbstractAcademicWebController {
     private Integer parseInt(String value, int fallback) { try { return value == null ? fallback : Integer.valueOf(value); } catch (NumberFormatException ex) { return fallback; } }
     private String message(Exception ex) { return ex.getMessage() == null ? "The request could not be completed." : ex.getMessage(); }
     private String bindingMessage(BindingResult binding) { return binding.getFieldErrors().stream().map(error -> error.getField() + ": " + error.getDefaultMessage()).collect(Collectors.joining("; ")); }
-    private String entityName() { return switch (module()) { case "academic-years" -> "AcademicYear"; case "program-subjects" -> "ProgramSubject"; case "student-enrollments" -> "StudentEnrollment"; default -> title().replace(" ", ""); }; }
+    private String entityName() { return switch (module()) { case "academic-years" -> "AcademicYear"; case "program-subjects" -> "ProgramSubject"; case "student-enrollments" -> "StudentEnrollment"; case "attendance" -> "StudentAttendance"; case "timetable" -> "TimetableSlot"; default -> title().replace(" ", ""); }; }
     private boolean isPlatformAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null && auth.getPrincipal() instanceof AuthenticatedUserPrincipal principal

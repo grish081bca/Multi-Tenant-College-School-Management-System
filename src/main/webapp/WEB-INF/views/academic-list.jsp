@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ include file="fragments/header.jspf" %>
+<section class="page-heading"><div><p class="eyebrow">Academic operations</p><h1><c:out value="${moduleTitle}"/></h1><p class="muted">Manage tenant-scoped ${moduleTitle.toLowerCase()} records.</p></div><c:if test="${canManageAcademic}"><c:url var="addRecordUrl" value="/web/${module}/add"><c:if test="${platformAdmin and not empty selectedTenantId}"><c:param name="tenantId" value="${selectedTenantId}"/></c:if></c:url><a class="button primary" href="${addRecordUrl}"><i class="fa-solid fa-plus" aria-hidden="true"></i>Add ${moduleTitle}</a></c:if></section>
 <section class="filter-panel">
     <form class="filter-grid" action="<c:url value='/web/${module}'/>" method="get">
         <label>Master Search<input name="q" value="<c:out value='${q}'/>" placeholder="Search all ${moduleTitle.toLowerCase()} columns"></label>
@@ -29,6 +30,9 @@
             <c:when test="${module == 'students'}"><c:out value="${record.email}"/><c:if test="${not empty record.phone}"> · <c:out value="${record.phone}"/></c:if></c:when>
             <c:when test="${module == 'semesters'}">Sequence <c:out value="${record.sequenceNumber}"/></c:when>
             <c:when test="${module == 'subjects'}">Credit hours <c:out value="${record.creditHours}"/></c:when>
+            <c:when test="${module == 'attendance'}"><c:out value="${record.studentName}"/> / <c:out value="${record.sectionName}"/> / <c:out value="${record.attendanceDate}"/> / <c:out value="${record.attendanceStatus}"/></c:when>
+            <c:when test="${module == 'timetable'}"><c:out value="${record.dayOfWeek}"/> <c:out value="${record.startTime}"/>–<c:out value="${record.endTime}"/> / <c:out value="${record.sectionName}"/> / <c:out value="${record.subjectName}"/> / <c:out value="${record.teacherName}"/></c:when>
+            <c:when test="${module == 'examinations'}"><c:out value="${record.examDate}"/> <c:out value="${record.startTime}"/>–<c:out value="${record.endTime}"/> / <c:out value="${record.sectionName}"/> / <c:out value="${record.subjectName}"/> / Max <c:out value="${record.maximumMarks}"/></c:when>
             <c:otherwise><c:out value="${record.description}"/></c:otherwise>
         </c:choose></td>
         <td><span class="status-pill status-${record.status}"><c:out value="${record.status}"/></span></td>

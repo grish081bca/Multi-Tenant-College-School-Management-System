@@ -1,10 +1,12 @@
 package com.college.erp.collegemanagementsystem.dto;
 
 import com.college.erp.collegemanagementsystem.enums.Status;
+import com.college.erp.collegemanagementsystem.enums.AttendanceStatus;
 import lombok.Getter;
 import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Getter @Setter
 public class AcademicRecordDTO {
@@ -42,4 +44,16 @@ public class AcademicRecordDTO {
     private String phone;
     private LocalDate dateOfBirth;
     private String address;
+    private Long enrollmentId;
+    private Long programSubjectId;
+    private LocalDate attendanceDate;
+    private AttendanceStatus attendanceStatus;
+    private String dayOfWeek;
+    private LocalTime startTime;
+    private LocalTime endTime;
+    private String room;
+    private Long teacherId;
+    private String teacherName;
+    private LocalDate examDate;
+    private BigDecimal maximumMarks;
 }
