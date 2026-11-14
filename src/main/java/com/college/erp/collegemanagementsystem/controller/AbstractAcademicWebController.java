@@ -128,7 +128,10 @@ public abstract class AbstractAcademicWebController {
             case "sections" -> { model.addAttribute("programs", workflow.options("programs", tenantId)); model.addAttribute("academicYears", workflow.options("academic-years", tenantId)); model.addAttribute("semesters", workflow.options("semesters", tenantId)); }
             case "program-subjects" -> { model.addAttribute("programs", workflow.options("programs", tenantId)); model.addAttribute("semesters", workflow.options("semesters", tenantId)); model.addAttribute("subjects", workflow.options("subjects", tenantId)); }
             case "student-enrollments" -> { model.addAttribute("students", workflow.options("students", tenantId)); model.addAttribute("programs", workflow.options("programs", tenantId)); model.addAttribute("academicYears", workflow.options("academic-years", tenantId)); model.addAttribute("semesters", workflow.options("semesters", tenantId)); model.addAttribute("sections", workflow.options("sections", tenantId)); }
-            case "attendance" -> model.addAttribute("enrollments", workflow.options("student-enrollments", tenantId));
+            case "attendance" -> {
+                model.addAttribute("enrollments", workflow.options("student-enrollments", tenantId));
+                model.addAttribute("attendanceStatuses", AttendanceStatus.values());
+            }
             case "timetable" -> { model.addAttribute("sections", workflow.options("sections", tenantId)); model.addAttribute("programSubjects", workflow.options("program-subjects", tenantId)); model.addAttribute("teachers", workflow.options("teachers", tenantId)); }
             case "examinations" -> { model.addAttribute("sections", workflow.options("sections", tenantId)); model.addAttribute("programSubjects", workflow.options("program-subjects", tenantId)); }
             default -> { }
