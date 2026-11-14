@@ -56,8 +56,8 @@
 3. Student Attendance (Complete)
 4. Timetable Management (Complete)
 5. Examination Management (Complete)
-6. Marks Entry and Verification
-7. Result Processing and GPA Calculation
+6. Marks Entry and Verification (Complete)
+7. Result Processing and GPA Calculation (Complete)
 8. Student Certificate Management
 9. Fee Structure Management
 10. Student Fee Collection
@@ -70,8 +70,11 @@
 * **Student Attendance:** Tenant-scoped daily attendance for active student enrollments, with present, absent, late, and excused statuses, duplicate-per-student-per-day checks, and audited changes.
 * **Timetable Management:** Tenant-scoped weekly class slots linked to sections and program subjects, with optional active teacher assignment and overlap checks for sections, teachers, and rooms.
 * **Examination Management:** Tenant-scoped examination schedules linked to sections and program subjects, with validated times, maximum marks, and section schedule overlap checks. Marks entry remains a separate module.
-* **Role access:** `SUPER_ADMIN` has read/write access to these modules with server-validated tenant selection. `SYSTEM_ADMIN` has read-only access. College administrators, principals, and branch administrators have read/write access; teachers have read access.
-* **Verification status:** `mvnw.cmd -q -DskipTests compile` completed successfully after the Student Attendance, Timetable, and Examination implementation. API runtime behavior and authenticated Postman requests have not been exercised.
+* **Marks Entry:** Tenant-scoped marks are recorded once per examination and student enrollment. The service validates that the examination, enrollment, section, program, semester, subject, and student belong to the same tenant, and that the enrollment matches the examination section and program subject. Marks must be non-negative and cannot exceed the examination maximum.
+* **Marks Verification:** Marks move from `PENDING` to `VERIFIED` or `REJECTED`. Rejection requires a reason; verified marks cannot be edited. Updating rejected marks resets them to pending for review. Entry and verification transitions are audited.
+* **Result Processing and GPA:** Results can be processed for an active enrollment only after every active examination in its section and semester has verified marks. Results retain totals and a per-subject breakdown. The current GPA rule converts each subject percentage linearly to a 4.0 scale (`percentage / 25`) and weights the subject grade points by credit hours; all included subjects must have positive credit hours. This is an interim rule until the institution supplies a grading-band policy.
+* **Role access:** `SUPER_ADMIN` has read/write/verify/process access with server-validated tenant selection. `SYSTEM_ADMIN` has read-only access to marks and results. College administrators, principals, and branch administrators can enter and verify marks and process results. Teachers have read-only access. Route security, method checks, role permissions, and menu templates are configured for these modules.
+* **Verification status:** `mvnw.cmd -q -DskipTests compile` completed successfully after Marks Entry, Marks Verification, and Result Processing/GPA implementation. API runtime behavior, authenticated requests, and Postman runs have not been exercised.
 
 ### Phase 3: Advanced Academic & Administrative Features (Pending)
 1. Library Management

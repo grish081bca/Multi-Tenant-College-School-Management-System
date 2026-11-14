@@ -66,6 +66,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/examinations/**").hasAuthority("PERMISSION_EXAMINATION_WRITE")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/examinations/**").hasAuthority("PERMISSION_EXAMINATION_WRITE")
                         .requestMatchers("/api/v1/examinations/**", "/web/examinations/**").hasAuthority("PERMISSION_EXAMINATION_READ")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/marks/**", "/web/marks/**").hasAuthority("PERMISSION_MARKS_WRITE")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/marks/**").hasAuthority("PERMISSION_MARKS_WRITE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/marks/**").hasAuthority("PERMISSION_MARKS_WRITE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/marks/**").hasAuthority("PERMISSION_MARKS_WRITE")
+                        .requestMatchers("/api/v1/marks/**", "/web/marks/**").hasAuthority("PERMISSION_MARKS_READ")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/marks-verification/**", "/web/marks-verification/**").hasAuthority("PERMISSION_MARKS_VERIFY")
+                        .requestMatchers("/api/v1/marks-verification/**", "/web/marks-verification/**").hasAuthority("PERMISSION_MARKS_READ")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/results/process", "/web/results/process").hasAuthority("PERMISSION_RESULTS_PROCESS")
+                        .requestMatchers("/api/v1/results/**", "/web/results/**").hasAuthority("PERMISSION_RESULTS_READ")
                         .requestMatchers("/api/v1/tenants/**", "/web/tenants/**", "/web/tenant-branches/**",
                                 "/api/v1/users/**", "/web/users/**", "/api/v1/user-templates/**", "/web/user-templates/**",
                                 "/api/v1/menus/**", "/web/menus/**", "/api/v1/menu-templates/**", "/web/menu-templates/**",
